@@ -1,1 +1,48 @@
-<a>문채서 바보</a>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>날아다니는 채서</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        .floating {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="letter" class="floating">문채서 바보</div>
+    <script>
+        const letter = document.getElementById("letter");
+        const speed = 2; 
+        let x = Math.random() * window.innerWidth;
+        let y = Math.random() * window.innerHeight;
+        let dx = speed * (Math.random() > 0.5 ? 1 : -1);
+        let dy = speed * (Math.random() > 0.5 ? 1 : -1);
+
+        function moveLetter() {
+            x += dx;
+            y += dy;
+            
+            if (x <= 0 || x + letter.clientWidth >= window.innerWidth) {
+                dx *= -1;
+            }
+            if (y <= 0 || y + letter.clientHeight >= window.innerHeight) {
+                dy *= -1;
+            }
+
+            letter.style.transform = `translate(${x}px, ${y}px)`;
+        }
+
+        setInterval(moveLetter, 10);
+    </script>
+</body>
+</html>
