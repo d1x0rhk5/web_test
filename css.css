@@ -1,4 +1,4 @@
-@import url('http://localhost:8080/flag');
+@import url('http://prob.cykor.kr:8082/flag');
 
 body::after {
     content: var(--flag);
