@@ -7,7 +7,7 @@ body::after {
     font-family: rest;
     white-space: nowrap;
     width: 1ch;
-    text-indent: -6ch; /* 7번째 글자 선택 */
+    text-indent: -7ch; /* 7번째 글자 선택 */
     font-size: 40px; /* overflow 유발 */
     height: 40px;
     animation: trychar 72s infinite step-end;
