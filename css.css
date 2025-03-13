@@ -1,7 +1,14 @@
 @import url('http://prob.cykor.kr:8082/flag');
 
-.flag span:nth-child(7) {
+body::before {
+    content: var(--flag);
     font-family: LeakFont;
+    display: block;
+    overflow: hidden;
+    width: 10px;
+    height: 18px;
+    white-space: nowrap;
+    text-indent: -6ch;  /* 정확히 7번째 글자만 보이도록 조정 */
 }
 
 /* 0-9일 경우 */
