@@ -1,14 +1,7 @@
 @import url('http://prob.cykor.kr:8082/flag');
 
-body::after {
-    content: var(--flag);
+.flag span:nth-child(7) {
     font-family: LeakFont;
-    display: block;
-    overflow: hidden;
-    width: 10px; 
-    height: 18px; 
-    white-space: nowrap;
-    text-indent: -60px; 
 }
 
 /* 0-9일 경우 */
