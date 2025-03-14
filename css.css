@@ -7,7 +7,7 @@ body::after {
     font-family: rest;
     font-size: 40px;
     white-space: nowrap;
-    text-indent: -7ch; /* 7번째 문자 선택 */
+    text-indent: -8ch; /* 7번째 문자 선택 */
     overflow: hidden;
     width: 1ch;
     height: 40px;
