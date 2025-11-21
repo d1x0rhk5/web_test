@@ -1,13 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<w2:page xmlns:w2="http://www.inswave.com/websquare"
+<w2:page xmlns="http://www.w3.org/1999/xhtml"
+         xmlns:ev="http://www.w3.org/2001/xml-events"
+         xmlns:w2="http://www.inswave.com/websquare"
          xmlns:xf="http://www.w3.org/2002/xforms">
-    <w2:head>
-        <w2:style><![CDATA[]]></w2:style>
+
+    <w2:head meta_screenId="index" meta_screenName="메인프레임 index">
+        <w2:type>DEFAULT</w2:type>
+
+        <xf:model>
+            <xf:instance>
+                <data xmlns=""></data>
+            </xf:instance>
+        </xf:model>
+
+        <w2:buildDate></w2:buildDate>
     </w2:head>
-    <w2:body>
+
+    <w2:body ev:onpageload="scwin_onload">
+        <xf:group id="grp_loading" style="position:absolute;left:0;right:0;top:0;bottom:0;background:#ffffff;z-index:99999;">
+            <xf:label>Loading…</xf:label>
+        </xf:group>
+
         <xf:script><![CDATA[
-            alert("XSS");
+
+            function scwin_onload() {
+                alert("XSS SUCCESS");
+            }
         ]]></xf:script>
     </w2:body>
+
 </w2:page>
