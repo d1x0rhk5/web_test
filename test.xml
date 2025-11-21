@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<w2:page xmlns:w2="http://www.inswave.com/websquare"
+         xmlns:xf="http://www.w3.org/2002/xforms">
+    
+    <xf:script><![CDATA[
+        alert('1');
+    ]]></xf:script>
+</w2:page>
