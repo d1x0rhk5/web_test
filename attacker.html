@@ -25,21 +25,22 @@ function log(stage, extra = '') {
 
 function openHelper() {
   try {
-    const helper = window.open('', '_blank', 'noopener=no');
+    const helper = window.open('', '_blank');
     if (!helper) {
       log('helper_null');
       return false;
     }
-    helper.document.open();
-    helper.document.write(`<!doctype html><script>
-      const target = ${JSON.stringify(target)};
-      const cb = ${JSON.stringify(callbackPath)};
-      const delay = ${callbackDelay};
-      setTimeout(() => {
-        location = target + '/callback?callback=' + encodeURIComponent(cb);
-      }, delay);
-    <\\/script>`);
-    helper.document.close();
+    const payload = `
+      (function() {
+        const target = ${JSON.stringify(target)};
+        const cb = ${JSON.stringify(callbackPath)};
+        const delay = ${callbackDelay};
+        setTimeout(() => {
+          location = target + '/callback?callback=' + encodeURIComponent(cb);
+        }, delay);
+      })();
+    `;
+    helper.eval(payload);
     log('helper_opened');
     return true;
   } catch (err) {
