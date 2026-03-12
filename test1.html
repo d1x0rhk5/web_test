@@ -1,7 +1,24 @@
 <!doctype html>
-<meta charset="utf-8">
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>test2</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: #fff; color: #000; }
+    pre {
+      margin: 0;
+      padding: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+  </style>
+</head>
+<body>
 <pre id="out"></pre>
 <script>
+const REPORT_URL = "https://test.dlxorhks.xyz/collect.gif";
 const out = document.getElementById("out");
 
 function err(e) {
@@ -12,210 +29,215 @@ function hex(buffer) {
   return [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function sha256(text) {
+async function sha256(value) {
+  const text = typeof value === "string" ? value : JSON.stringify(value);
   return hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
 }
 
-async function getUAHints() {
-  const r = {
-    supported: !!navigator.userAgentData,
-    mobile: null,
-    platform: null,
-    brands: null,
-    highEntropy: null,
-    error: null
-  };
-  try {
-    if (!navigator.userAgentData) return r;
-    r.mobile = navigator.userAgentData.mobile;
-    r.platform = navigator.userAgentData.platform;
-    r.brands = navigator.userAgentData.brands || null;
-    if (navigator.userAgentData.getHighEntropyValues) {
-      r.highEntropy = await navigator.userAgentData.getHighEntropyValues([
-        "architecture",
-        "bitness",
-        "formFactors",
-        "fullVersionList",
-        "model",
-        "platformVersion",
-        "uaFullVersion",
-        "wow64"
-      ]);
-    }
-  } catch (e) {
-    r.error = err(e);
-  }
-  return r;
-}
-
-function getNavigatorData() {
+function getScreenViewportBundle() {
+  const vv = window.visualViewport;
   return {
-    userAgent: navigator.userAgent || null,
-    vendor: navigator.vendor || null,
-    deviceMemory: navigator.deviceMemory ?? null,
-    languages: navigator.languages || null,
-    pdfViewerEnabled: navigator.pdfViewerEnabled ?? null,
-    webdriver: navigator.webdriver ?? null
+    screen: {
+      width: window.screen?.width ?? null,
+      height: window.screen?.height ?? null,
+      availWidth: window.screen?.availWidth ?? null,
+      availHeight: window.screen?.availHeight ?? null,
+      colorDepth: window.screen?.colorDepth ?? null,
+      pixelDepth: window.screen?.pixelDepth ?? null,
+      orientationType: window.screen?.orientation?.type ?? null,
+      orientationAngle: window.screen?.orientation?.angle ?? null
+    },
+    window: {
+      innerWidth: window.innerWidth ?? null,
+      innerHeight: window.innerHeight ?? null,
+      outerWidth: window.outerWidth ?? null,
+      outerHeight: window.outerHeight ?? null,
+      devicePixelRatio: window.devicePixelRatio ?? null
+    },
+    visualViewport: vv ? {
+      width: vv.width ?? null,
+      height: vv.height ?? null,
+      scale: vv.scale ?? null,
+      offsetLeft: vv.offsetLeft ?? null,
+      offsetTop: vv.offsetTop ?? null,
+      pageLeft: vv.pageLeft ?? null,
+      pageTop: vv.pageTop ?? null
+    } : null
   };
 }
 
-function getMonospaceSize() {
-  const d = document.createElement("div");
-  d.style.position = "absolute";
-  d.style.left = "-9999px";
-  d.style.visibility = "hidden";
-  const s = document.createElement("span");
-  s.textContent = "mmmmmmmmmmlliWWWWWW";
-  s.style.fontFamily = "monospace";
-  s.style.fontSize = "72px";
-  d.appendChild(s);
-  document.body.appendChild(d);
-  const rect = s.getBoundingClientRect();
-  document.body.removeChild(d);
-  return { width: rect.width, height: rect.height };
-}
-
-function getFontCount() {
-  const baseFonts = ["monospace", "sans-serif", "serif"];
-  const testFonts = [
-    "Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman",
-    "Georgia", "Garamond", "Courier New", "Brush Script MT",
-    "Segoe UI", "Helvetica", "Roboto", "Noto Sans", "Noto Serif",
-    "Calibri", "Cambria", "Consolas", "Candara", "Impact",
-    "Comic Sans MS", "Palatino", "Monaco", "Menlo", "Ubuntu",
-    "Inter", "SF Pro Text", "Apple SD Gothic Neo", "Malgun Gothic"
-  ];
-  const str = "mmmmmmmmmmlliWWWWWW1234567890";
-  const size = "72px";
-  const box = document.createElement("div");
-  box.style.position = "absolute";
-  box.style.left = "-9999px";
-  box.style.visibility = "hidden";
-  document.body.appendChild(box);
-
-  const base = {};
-  for (const b of baseFonts) {
-    const s = document.createElement("span");
-    s.textContent = str;
-    s.style.fontSize = size;
-    s.style.fontFamily = b;
-    box.appendChild(s);
-    base[b] = { w: s.offsetWidth, h: s.offsetHeight };
-    box.removeChild(s);
-  }
-
-  const detected = [];
-  for (const f of testFonts) {
-    let ok = false;
-    for (const b of baseFonts) {
-      const s = document.createElement("span");
-      s.textContent = str;
-      s.style.fontSize = size;
-      s.style.fontFamily = `'${f}', ${b}`;
-      box.appendChild(s);
-      if (s.offsetWidth !== base[b].w || s.offsetHeight !== base[b].h) ok = true;
-      box.removeChild(s);
-      if (ok) break;
-    }
-    if (ok) detected.push(f);
-  }
-
-  document.body.removeChild(box);
-  return { estimatedCount: detected.length, detectedFonts: detected };
-}
-
-async function getCanvas() {
+function getIntlLocaleTimezoneBundle() {
   try {
-    const c = document.createElement("canvas");
-    c.width = 300;
-    c.height = 150;
-    const x = c.getContext("2d");
-    x.textBaseline = "top";
-    x.font = "16px Arial";
-    x.fillStyle = "#f60";
-    x.fillRect(10, 10, 100, 40);
-    x.fillStyle = "#069";
-    x.fillText("fingerprint-test-한글-ABC-123", 20, 20);
-    x.beginPath();
-    x.arc(200, 75, 50, 0, Math.PI * 2, true);
-    x.closePath();
-    x.fillStyle = "rgba(120, 40, 200, 0.7)";
-    x.fill();
-    const dataUrl = c.toDataURL();
-    return { width: c.width, height: c.height, hash: await sha256(dataUrl) };
+    const ro = Intl.DateTimeFormat().resolvedOptions();
+    return {
+      locale: ro.locale || null,
+      calendar: ro.calendar || null,
+      numberingSystem: ro.numberingSystem || null,
+      hourCycle: ro.hourCycle || null,
+      timeZone: ro.timeZone || null
+    };
   } catch (e) {
     return { error: err(e) };
   }
 }
 
-function getWebGL() {
+async function getMediaDevicesTopology() {
   try {
-    const c = document.createElement("canvas");
-    const gl = c.getContext("webgl") || c.getContext("experimental-webgl") || c.getContext("webgl2");
-    if (!gl) return { supported: false };
-    const debug = gl.getExtension("WEBGL_debug_renderer_info");
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      return {
+        supported: false,
+        secureContext: window.isSecureContext,
+        counts: null,
+        totalDevices: null,
+        topologyHash: null
+      };
+    }
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const counts = { audioinput: 0, videoinput: 0, audiooutput: 0, other: 0 };
+    const simplified = devices.map((d) => {
+      if (d.kind in counts) counts[d.kind] += 1;
+      else counts.other += 1;
+      return {
+        kind: d.kind,
+        label: d.label || "",
+        deviceId: d.deviceId || "",
+        groupId: d.groupId || ""
+      };
+    });
+
+    const labeledDeviceCount = devices.filter((d) => !!d.label).length;
+    const uniqueGroups = new Set(devices.map((d) => d.groupId).filter(Boolean)).size;
+
     return {
       supported: true,
-      version: gl.getParameter(gl.VERSION),
-      shadingLanguageVersion: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
-      vendor: debug ? gl.getParameter(debug.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
-      renderer: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)
+      secureContext: window.isSecureContext,
+      counts,
+      totalDevices: devices.length,
+      labeledDeviceCount,
+      uniqueGroups,
+      topologyHash: await sha256(simplified)
     };
   } catch (e) {
-    return { supported: false, error: err(e) };
+    return {
+      supported: false,
+      secureContext: window.isSecureContext,
+      error: err(e)
+    };
   }
 }
 
-async function getAudio() {
+async function getWebGPUAdapterInfo() {
   try {
-    const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-    if (!Ctx) return { supported: false };
-    const ctx = new Ctx(1, 44100, 44100);
-    const osc = ctx.createOscillator();
-    const comp = ctx.createDynamicsCompressor();
-    osc.type = "triangle";
-    osc.frequency.value = 10000;
-    comp.threshold.value = -50;
-    comp.knee.value = 40;
-    comp.ratio.value = 12;
-    comp.attack.value = 0;
-    comp.release.value = 0.25;
-    osc.connect(comp);
-    comp.connect(ctx.destination);
-    osc.start(0);
-    const buf = await ctx.startRendering();
-    const ch = buf.getChannelData(0);
-    let sum = 0;
-    for (let i = 0; i < ch.length; i++) sum += Math.abs(ch[i]);
+    if (!navigator.gpu || !navigator.gpu.requestAdapter) {
+      return {
+        supported: false,
+        secureContext: window.isSecureContext,
+        adapter: null
+      };
+    }
+
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) {
+      return {
+        supported: false,
+        secureContext: window.isSecureContext,
+        adapter: null
+      };
+    }
+
+    let info = null;
+    try {
+      if (adapter.info) {
+        info = {
+          vendor: adapter.info.vendor || "",
+          architecture: adapter.info.architecture || "",
+          device: adapter.info.device || "",
+          description: adapter.info.description || ""
+        };
+      }
+    } catch (e) {
+      info = { error: err(e) };
+    }
+
+    let features = [];
+    try {
+      features = [...adapter.features.values()].sort();
+    } catch (_) {}
+
+    let limits = {};
+    try {
+      for (const k in adapter.limits) {
+        if (typeof adapter.limits[k] !== "function") limits[k] = adapter.limits[k];
+      }
+    } catch (_) {}
+
+    let isFallbackAdapter = null;
+    try {
+      isFallbackAdapter = adapter.isFallbackAdapter ?? null;
+    } catch (_) {}
+
     return {
       supported: true,
-      length: buf.length,
-      fingerprintValue: Number(sum.toFixed(8))
+      secureContext: window.isSecureContext,
+      isFallbackAdapter,
+      info,
+      featureCount: features.length,
+      featuresHash: await sha256(features),
+      limitsHash: await sha256(limits),
+      adapterHash: await sha256({ info, features, limits, isFallbackAdapter })
     };
   } catch (e) {
-    return { supported: false, error: err(e) };
+    return {
+      supported: false,
+      secureContext: window.isSecureContext,
+      error: err(e)
+    };
   }
 }
 
 async function collect() {
   return {
     collectedAt: new Date().toISOString(),
-    navigator: getNavigatorData(),
-    uaClientHints: await getUAHints(),
-    fonts: getFontCount(),
-    monospaceFontPx: getMonospaceSize(),
-    canvas: await getCanvas(),
-    webgl: getWebGL(),
-    audioContext: await getAudio()
+    screenViewportBundle: getScreenViewportBundle(),
+    intlLocaleTimezoneBundle: getIntlLocaleTimezoneBundle(),
+    mediaDevicesTopology: await getMediaDevicesTopology(),
+    webgpuAdapterInfo: await getWebGPUAdapterInfo()
   };
+}
+
+function toBase64UrlUtf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function sendByGet(data) {
+  const json = JSON.stringify(data);
+  const encoded = toBase64UrlUtf8(json);
+  const url = REPORT_URL + "?d=" + encodeURIComponent(encoded) + "&t=" + Date.now();
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ ok: true, endpoint: REPORT_URL, encodedLength: encoded.length });
+    img.onerror = () => resolve({ ok: false, endpoint: REPORT_URL, encodedLength: encoded.length });
+    img.src = url;
+  });
 }
 
 (async () => {
   try {
     const data = await collect();
     out.textContent = JSON.stringify(data, null, 2);
+    await sendByGet(data);
   } catch (e) {
     out.textContent = JSON.stringify({ error: err(e) }, null, 2);
   }
 })();
 </script>
+</body>
+</html>
