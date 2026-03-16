@@ -1,38 +1,155 @@
 <!doctype html>
-<meta charset="utf-8">
-<pre id="out"></pre>
-<script>
-const REPORT_URL = "https://test.dlxorhks.xyz/api/report";
-const out = document.getElementById("out");
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fingerprint Test</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #111111;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-function err(e) {
-  return e ? { name: e.name || "Error", message: e.message || String(e) } : null;
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+    }
+
+    p {
+      margin: 0 0 12px;
+      line-height: 1.5;
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+      margin: 20px 0 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    select,
+    input,
+    button {
+      font: inherit;
+    }
+
+    select,
+    input {
+      padding: 10px 12px;
+      border: 1px solid #c8c8c8;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #111111;
+    }
+
+    button {
+      width: fit-content;
+      padding: 10px 16px;
+      border: 1px solid #111111;
+      border-radius: 8px;
+      background: #111111;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .hint {
+      color: #555555;
+      font-size: 14px;
+    }
+
+    pre {
+      margin: 20px 0 0;
+      padding: 12px;
+      border: 1px solid #d8d8d8;
+      border-radius: 8px;
+      background: #fafafa;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <div class="controls">
+    <button id="collectButton" type="button">Retry Send</button>
+    <p id="status" class="hint">Waiting. Enable Accept on the destination target first.</p>
+  </div>
+  <pre id="out">Preparing automatic capture...</pre>
+</main>
+
+<script>
+const REPORT_PATH = "/get_json";
+const out = document.getElementById("out");
+const collectButton = document.getElementById("collectButton");
+const statusText = document.getElementById("status");
+const params = new URLSearchParams(window.location.search);
+const state = {
+  busy: false,
+};
+
+function err(error) {
+  return error ? { name: error.name || "Error", message: error.message || String(error) } : null;
 }
 
 function hex(buffer) {
-  return [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, "0")).join("");
+  return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function sha256(text) {
+async function sha256(value) {
+  const text = typeof value === "string" ? value : JSON.stringify(value);
   return hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
 }
 
+function getRunContext() {
+  return {
+    version: params.get("version") || "",
+    environment: params.get("environment") || "",
+    operatingSystem: params.get("operatingSystem") || params.get("os") || "",
+    notes: params.get("notes") || "",
+    current: params.get("current") || "1",
+  };
+}
+
 async function getUAHints() {
-  const r = {
-    supported: !!navigator.userAgentData,
+  const result = {
+    supported: Boolean(navigator.userAgentData),
     mobile: null,
     platform: null,
     brands: null,
     highEntropy: null,
-    error: null
+    error: null,
   };
+
   try {
-    if (!navigator.userAgentData) return r;
-    r.mobile = navigator.userAgentData.mobile;
-    r.platform = navigator.userAgentData.platform;
-    r.brands = navigator.userAgentData.brands || null;
+    if (!navigator.userAgentData) {
+      return result;
+    }
+
+    result.mobile = navigator.userAgentData.mobile;
+    result.platform = navigator.userAgentData.platform;
+    result.brands = navigator.userAgentData.brands || null;
     if (navigator.userAgentData.getHighEntropyValues) {
-      r.highEntropy = await navigator.userAgentData.getHighEntropyValues([
+      result.highEntropy = await navigator.userAgentData.getHighEntropyValues([
         "architecture",
         "bitness",
         "formFactors",
@@ -43,10 +160,11 @@ async function getUAHints() {
         "wow64"
       ]);
     }
-  } catch (e) {
-    r.error = err(e);
+  } catch (error) {
+    result.error = err(error);
   }
-  return r;
+
+  return result;
 }
 
 function getNavigatorData() {
@@ -56,23 +174,23 @@ function getNavigatorData() {
     deviceMemory: navigator.deviceMemory ?? null,
     languages: navigator.languages || null,
     pdfViewerEnabled: navigator.pdfViewerEnabled ?? null,
-    webdriver: navigator.webdriver ?? null
+    webdriver: navigator.webdriver ?? null,
   };
 }
 
 function getMonospaceSize() {
-  const d = document.createElement("div");
-  d.style.position = "absolute";
-  d.style.left = "-9999px";
-  d.style.visibility = "hidden";
-  const s = document.createElement("span");
-  s.textContent = "mmmmmmmmmmlliWWWWWW";
-  s.style.fontFamily = "monospace";
-  s.style.fontSize = "72px";
-  d.appendChild(s);
-  document.body.appendChild(d);
-  const rect = s.getBoundingClientRect();
-  document.body.removeChild(d);
+  const wrapper = document.createElement("div");
+  wrapper.style.position = "absolute";
+  wrapper.style.left = "-9999px";
+  wrapper.style.visibility = "hidden";
+  const sample = document.createElement("span");
+  sample.textContent = "mmmmmmmmmmlliWWWWWW";
+  sample.style.fontFamily = "monospace";
+  sample.style.fontSize = "72px";
+  wrapper.appendChild(sample);
+  document.body.appendChild(wrapper);
+  const rect = sample.getBoundingClientRect();
+  document.body.removeChild(wrapper);
   return { width: rect.width, height: rect.height };
 }
 
@@ -86,7 +204,7 @@ function getFontCount() {
     "Comic Sans MS", "Palatino", "Monaco", "Menlo", "Ubuntu",
     "Inter", "SF Pro Text", "Apple SD Gothic Neo", "Malgun Gothic"
   ];
-  const str = "mmmmmmmmmmlliWWWWWW1234567890";
+  const text = "mmmmmmmmmmlliWWWWWW1234567890";
   const size = "72px";
   const box = document.createElement("div");
   box.style.position = "absolute";
@@ -95,30 +213,36 @@ function getFontCount() {
   document.body.appendChild(box);
 
   const base = {};
-  for (const b of baseFonts) {
-    const s = document.createElement("span");
-    s.textContent = str;
-    s.style.fontSize = size;
-    s.style.fontFamily = b;
-    box.appendChild(s);
-    base[b] = { w: s.offsetWidth, h: s.offsetHeight };
-    box.removeChild(s);
+  for (const font of baseFonts) {
+    const sample = document.createElement("span");
+    sample.textContent = text;
+    sample.style.fontSize = size;
+    sample.style.fontFamily = font;
+    box.appendChild(sample);
+    base[font] = { width: sample.offsetWidth, height: sample.offsetHeight };
+    box.removeChild(sample);
   }
 
   const detected = [];
-  for (const f of testFonts) {
-    let ok = false;
-    for (const b of baseFonts) {
-      const s = document.createElement("span");
-      s.textContent = str;
-      s.style.fontSize = size;
-      s.style.fontFamily = `'${f}', ${b}`;
-      box.appendChild(s);
-      if (s.offsetWidth !== base[b].w || s.offsetHeight !== base[b].h) ok = true;
-      box.removeChild(s);
-      if (ok) break;
+  for (const font of testFonts) {
+    let found = false;
+    for (const baseFont of baseFonts) {
+      const sample = document.createElement("span");
+      sample.textContent = text;
+      sample.style.fontSize = size;
+      sample.style.fontFamily = `'${font}', ${baseFont}`;
+      box.appendChild(sample);
+      if (sample.offsetWidth !== base[baseFont].width || sample.offsetHeight !== base[baseFont].height) {
+        found = true;
+      }
+      box.removeChild(sample);
+      if (found) {
+        break;
+      }
     }
-    if (ok) detected.push(f);
+    if (found) {
+      detected.push(font);
+    }
   }
 
   document.body.removeChild(box);
@@ -127,74 +251,250 @@ function getFontCount() {
 
 async function getCanvas() {
   try {
-    const c = document.createElement("canvas");
-    c.width = 300;
-    c.height = 150;
-    const x = c.getContext("2d");
-    x.textBaseline = "top";
-    x.font = "16px Arial";
-    x.fillStyle = "#f60";
-    x.fillRect(10, 10, 100, 40);
-    x.fillStyle = "#069";
-    x.fillText("fingerprint-test-한글-ABC-123", 20, 20);
-    x.beginPath();
-    x.arc(200, 75, 50, 0, Math.PI * 2, true);
-    x.closePath();
-    x.fillStyle = "rgba(120, 40, 200, 0.7)";
-    x.fill();
-    const dataUrl = c.toDataURL();
-    return { width: c.width, height: c.height, hash: await sha256(dataUrl) };
-  } catch (e) {
-    return { error: err(e) };
+    const canvas = document.createElement("canvas");
+    canvas.width = 300;
+    canvas.height = 150;
+    const context = canvas.getContext("2d");
+    context.textBaseline = "top";
+    context.font = "16px Arial";
+    context.fillStyle = "#f60";
+    context.fillRect(10, 10, 100, 40);
+    context.fillStyle = "#069";
+    context.fillText("fingerprint-test-ABC-123", 20, 20);
+    context.beginPath();
+    context.arc(200, 75, 50, 0, Math.PI * 2, true);
+    context.closePath();
+    context.fillStyle = "rgba(120, 40, 200, 0.7)";
+    context.fill();
+    const dataUrl = canvas.toDataURL();
+    return { width: canvas.width, height: canvas.height, hash: await sha256(dataUrl) };
+  } catch (error) {
+    return { error: err(error) };
   }
 }
 
 function getWebGL() {
   try {
-    const c = document.createElement("canvas");
-    const gl = c.getContext("webgl") || c.getContext("experimental-webgl") || c.getContext("webgl2");
-    if (!gl) return { supported: false };
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl") || canvas.getContext("webgl2");
+    if (!gl) {
+      return { supported: false };
+    }
+
     const debug = gl.getExtension("WEBGL_debug_renderer_info");
     return {
       supported: true,
       version: gl.getParameter(gl.VERSION),
       shadingLanguageVersion: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
       vendor: debug ? gl.getParameter(debug.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
-      renderer: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)
+      renderer: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
     };
-  } catch (e) {
-    return { supported: false, error: err(e) };
+  } catch (error) {
+    return { supported: false, error: err(error) };
   }
 }
 
 async function getAudio() {
   try {
-    const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-    if (!Ctx) return { supported: false };
-    const ctx = new Ctx(1, 44100, 44100);
-    const osc = ctx.createOscillator();
-    const comp = ctx.createDynamicsCompressor();
-    osc.type = "triangle";
-    osc.frequency.value = 10000;
-    comp.threshold.value = -50;
-    comp.knee.value = 40;
-    comp.ratio.value = 12;
-    comp.attack.value = 0;
-    comp.release.value = 0.25;
-    osc.connect(comp);
-    comp.connect(ctx.destination);
-    osc.start(0);
-    const buf = await ctx.startRendering();
-    const ch = buf.getChannelData(0);
+    const Context = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!Context) {
+      return { supported: false };
+    }
+
+    const context = new Context(1, 44100, 44100);
+    const oscillator = context.createOscillator();
+    const compressor = context.createDynamicsCompressor();
+    oscillator.type = "triangle";
+    oscillator.frequency.value = 10000;
+    compressor.threshold.value = -50;
+    compressor.knee.value = 40;
+    compressor.ratio.value = 12;
+    compressor.attack.value = 0;
+    compressor.release.value = 0.25;
+    oscillator.connect(compressor);
+    compressor.connect(context.destination);
+    oscillator.start(0);
+    const buffer = await context.startRendering();
+    const channel = buffer.getChannelData(0);
     let sum = 0;
-    for (let i = 0; i < ch.length; i++) sum += Math.abs(ch[i]);
+    for (let index = 0; index < channel.length; index += 1) {
+      sum += Math.abs(channel[index]);
+    }
+
     return {
       supported: true,
-      length: buf.length,
-      fingerprintValue: Number(sum.toFixed(8))
+      length: buffer.length,
+      fingerprintValue: Number(sum.toFixed(8)),
     };
-  } catch (e) {
-    return { supported: false, error: err(e) };
+  } catch (error) {
+    return { supported: false, error: err(error) };
+  }
+}
+
+function getScreenViewportBundle() {
+  const viewport = window.visualViewport;
+  return {
+    screen: {
+      width: window.screen?.width ?? null,
+      height: window.screen?.height ?? null,
+      availWidth: window.screen?.availWidth ?? null,
+      availHeight: window.screen?.availHeight ?? null,
+      colorDepth: window.screen?.colorDepth ?? null,
+      pixelDepth: window.screen?.pixelDepth ?? null,
+      orientationType: window.screen?.orientation?.type ?? null,
+      orientationAngle: window.screen?.orientation?.angle ?? null,
+    },
+    window: {
+      innerWidth: window.innerWidth ?? null,
+      innerHeight: window.innerHeight ?? null,
+      outerWidth: window.outerWidth ?? null,
+      outerHeight: window.outerHeight ?? null,
+      devicePixelRatio: window.devicePixelRatio ?? null,
+    },
+    visualViewport: viewport ? {
+      width: viewport.width ?? null,
+      height: viewport.height ?? null,
+      scale: viewport.scale ?? null,
+      offsetLeft: viewport.offsetLeft ?? null,
+      offsetTop: viewport.offsetTop ?? null,
+      pageLeft: viewport.pageLeft ?? null,
+      pageTop: viewport.pageTop ?? null,
+    } : null,
+  };
+}
+
+function getIntlLocaleTimezoneBundle() {
+  try {
+    const options = Intl.DateTimeFormat().resolvedOptions();
+    return {
+      locale: options.locale || null,
+      calendar: options.calendar || null,
+      numberingSystem: options.numberingSystem || null,
+      hourCycle: options.hourCycle || null,
+      timeZone: options.timeZone || null,
+    };
+  } catch (error) {
+    return { error: err(error) };
+  }
+}
+
+async function getMediaDevicesTopology() {
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      return {
+        supported: false,
+        secureContext: window.isSecureContext,
+        counts: null,
+        totalDevices: null,
+        topologyHash: null,
+      };
+    }
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const counts = { audioinput: 0, videoinput: 0, audiooutput: 0, other: 0 };
+    const simplified = devices.map((device) => {
+      if (device.kind in counts) {
+        counts[device.kind] += 1;
+      } else {
+        counts.other += 1;
+      }
+      return {
+        kind: device.kind,
+        label: device.label || "",
+        deviceId: device.deviceId || "",
+        groupId: device.groupId || "",
+      };
+    });
+
+    const labeledDeviceCount = devices.filter((device) => Boolean(device.label)).length;
+    const uniqueGroups = new Set(devices.map((device) => device.groupId).filter(Boolean)).size;
+
+    return {
+      supported: true,
+      secureContext: window.isSecureContext,
+      counts,
+      totalDevices: devices.length,
+      labeledDeviceCount,
+      uniqueGroups,
+      topologyHash: await sha256(simplified),
+    };
+  } catch (error) {
+    return {
+      supported: false,
+      secureContext: window.isSecureContext,
+      error: err(error),
+    };
+  }
+}
+
+async function getWebGPUAdapterInfo() {
+  try {
+    if (!navigator.gpu || !navigator.gpu.requestAdapter) {
+      return {
+        supported: false,
+        secureContext: window.isSecureContext,
+        adapter: null,
+      };
+    }
+
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) {
+      return {
+        supported: false,
+        secureContext: window.isSecureContext,
+        adapter: null,
+      };
+    }
+
+    let info = null;
+    try {
+      if (adapter.info) {
+        info = {
+          vendor: adapter.info.vendor || "",
+          architecture: adapter.info.architecture || "",
+          device: adapter.info.device || "",
+          description: adapter.info.description || "",
+        };
+      }
+    } catch (error) {
+      info = { error: err(error) };
+    }
+
+    let features = [];
+    try {
+      features = [...adapter.features.values()].sort();
+    } catch (_error) {}
+
+    let limits = {};
+    try {
+      for (const key in adapter.limits) {
+        if (typeof adapter.limits[key] !== "function") {
+          limits[key] = adapter.limits[key];
+        }
+      }
+    } catch (_error) {}
+
+    let isFallbackAdapter = null;
+    try {
+      isFallbackAdapter = adapter.isFallbackAdapter ?? null;
+    } catch (_error) {}
+
+    return {
+      supported: true,
+      secureContext: window.isSecureContext,
+      isFallbackAdapter,
+      info,
+      featureCount: features.length,
+      featuresHash: await sha256(features),
+      limitsHash: await sha256(limits),
+      adapterHash: await sha256({ info, features, limits, isFallbackAdapter }),
+    };
+  } catch (error) {
+    return {
+      supported: false,
+      secureContext: window.isSecureContext,
+      error: err(error),
+    };
   }
 }
 
@@ -207,32 +507,109 @@ async function collect() {
     monospaceFontPx: getMonospaceSize(),
     canvas: await getCanvas(),
     webgl: getWebGL(),
-    audioContext: await getAudio()
+    audioContext: await getAudio(),
+    screenViewportBundle: getScreenViewportBundle(),
+    intlLocaleTimezoneBundle: getIntlLocaleTimezoneBundle(),
+    mediaDevicesTopology: await getMediaDevicesTopology(),
+    webgpuAdapterInfo: await getWebGPUAdapterInfo(),
   };
 }
 
-async function send(data) {
-  const res = await fetch(REPORT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    mode: "cors",
-    body: JSON.stringify(data)
+function toBase64UrlUtf8(text) {
+  const bytes = new TextEncoder().encode(text);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunk));
+  }
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+async function sendByGet(data, context) {
+  const encoded = toBase64UrlUtf8(JSON.stringify(data));
+  const url = new URL("https://asdfg.ap-northeast-2.arkain.site/get_json");
+  url.searchParams.set("d", encoded);
+  url.searchParams.set("t", String(Date.now()));
+
+  for (const [key, value] of Object.entries(context)) {
+    if (value) {
+      url.searchParams.set(key, value);
+    }
+  }
+
+  const response = await fetch(url, {
+    method: "GET",
+    cache: "no-store",
+    headers: {
+      "Accept": "application/json",
+    },
   });
-  const text = await res.text();
+
+  let body = null;
   try {
-    return { ok: res.ok, status: res.status, body: JSON.parse(text) };
-  } catch {
-    return { ok: res.ok, status: res.status, body: text };
+    body = await response.json();
+  } catch (_error) {}
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    endpoint: url.pathname,
+    encodedLength: encoded.length,
+    response: body,
+  };
+}
+
+function setStatus(message, isError = false) {
+  statusText.textContent = message;
+  statusText.style.color = isError ? "#b42318" : "#555555";
+}
+
+function syncBusy() {
+  collectButton.disabled = state.busy;
+  collectButton.textContent = state.busy ? "Sending..." : "Retry Send";
+}
+
+async function handleCollect() {
+  const context = getRunContext();
+  state.busy = true;
+  syncBusy();
+  setStatus("Collecting fingerprint data...");
+  out.textContent = "Collecting...";
+
+  try {
+    const data = await collect();
+    setStatus("Sending data...");
+    const result = await sendByGet(data, context);
+    out.textContent = JSON.stringify({
+      context,
+      localFingerprint: data,
+      sendResult: result,
+    }, null, 2);
+    if (!result.ok) {
+      throw new Error(`Send failed with status ${result.status}.`);
+    }
+    setStatus("Saved to the target that currently has Accept enabled.");
+  } catch (error) {
+    out.textContent = JSON.stringify({
+      context,
+      error: err(error),
+    }, null, 2);
+    setStatus(error.message, true);
+  } finally {
+    state.busy = false;
+    syncBusy();
   }
 }
 
-(async () => {
-  try {
-    const data = await collect();
-    const result = await send(data);
-    out.textContent = JSON.stringify({ localFingerprint: data, serverResponse: result }, null, 2);
-  } catch (e) {
-    out.textContent = JSON.stringify({ error: err(e) }, null, 2);
-  }
-})();
+collectButton.addEventListener("click", () => {
+  handleCollect();
+});
+
+window.addEventListener("load", () => {
+  window.setTimeout(() => {
+    handleCollect();
+  }, 150);
+});
 </script>
+</body>
+</html>
