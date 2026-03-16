@@ -540,25 +540,19 @@ function sendByGet(data, context) {
   return new Promise((resolve) => {
     const img = new Image();
 
-    img.onload = () => {
+    const done = (loaded) => {
       resolve({
         ok: true,
-        status: 200,
+        transport: "img",
+        loaded,
         endpoint: url.pathname,
         encodedLength: encoded.length,
         response: null,
       });
     };
 
-    img.onerror = () => {
-      resolve({
-        ok: false,
-        status: 0,
-        endpoint: url.pathname,
-        encodedLength: encoded.length,
-        response: null,
-      });
-    };
+    img.onload = () => done(true);
+    img.onerror = () => done(false);
 
     img.src = url.toString();
   });
@@ -590,9 +584,6 @@ async function handleCollect() {
       localFingerprint: data,
       sendResult: result,
     }, null, 2);
-    if (!result.ok) {
-      throw new Error(`Send failed with status ${result.status}.`);
-    }
     setStatus("Saved to the target that currently has Accept enabled.");
   } catch (error) {
     out.textContent = JSON.stringify({
