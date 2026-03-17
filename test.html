@@ -90,9 +90,12 @@
 </head>
 <body>
 <main>
+  <h1>Fingerprint Test</h1>
+  <p>This page collects browser fingerprint signals and forwards them to <code>/get_json</code>.</p>
+  <p class="hint">Before collecting, open <code>db.dlxorhks.xyz</code> and enable <code>Accept</code> on the target that should receive incoming data. Optional query params still work: <code>version</code>, <code>environment</code>, <code>operatingSystem</code> (or <code>os</code>), <code>notes</code>, <code>current</code>.</p>
   <div class="controls">
     <button id="collectButton" type="button">Retry Send</button>
-    <p id="status" class="hint">Page loaded. Automatic fingerprint collection will start shortly</p>
+    <p id="status" class="hint">Waiting. Enable Accept on the destination target first.</p>
   </div>
   <pre id="out">Preparing automatic capture...</pre>
 </main>
@@ -525,37 +528,38 @@ function toBase64UrlUtf8(text) {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-function sendByGet(data, context) {
+async function sendByGet(data, context) {
   const encoded = toBase64UrlUtf8(JSON.stringify(data));
-  const url = new URL("https://asdfg.ap-northeast-2.arkain.site/get_json");
+  const url = new URL(REPORT_PATH, window.location.origin);
   url.searchParams.set("d", encoded);
   url.searchParams.set("t", String(Date.now()));
 
   for (const [key, value] of Object.entries(context)) {
-    if (value != null && value !== "") {
-      url.searchParams.set(key, String(value));
+    if (value) {
+      url.searchParams.set(key, value);
     }
   }
 
-  return new Promise((resolve) => {
-    const img = new Image();
-
-    const done = (loaded) => {
-      resolve({
-        ok: true,
-        transport: "img",
-        loaded,
-        endpoint: url.pathname,
-        encodedLength: encoded.length,
-        response: null,
-      });
-    };
-
-    img.onload = () => done(true);
-    img.onerror = () => done(false);
-
-    img.src = url.toString();
+  const response = await fetch(url, {
+    method: "GET",
+    cache: "no-store",
+    headers: {
+      "Accept": "application/json",
+    },
   });
+
+  let body = null;
+  try {
+    body = await response.json();
+  } catch (_error) {}
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    endpoint: url.pathname,
+    encodedLength: encoded.length,
+    response: body,
+  };
 }
 
 function setStatus(message, isError = false) {
@@ -577,13 +581,16 @@ async function handleCollect() {
 
   try {
     const data = await collect();
-    setStatus("Sending data...");
+    setStatus("Sending data to /get_json...");
     const result = await sendByGet(data, context);
     out.textContent = JSON.stringify({
       context,
       localFingerprint: data,
       sendResult: result,
     }, null, 2);
+    if (!result.ok) {
+      throw new Error(`Send failed with status ${result.status}.`);
+    }
     setStatus("Saved to the target that currently has Accept enabled.");
   } catch (error) {
     out.textContent = JSON.stringify({
@@ -601,11 +608,17 @@ collectButton.addEventListener("click", () => {
   handleCollect();
 });
 
-window.addEventListener("load", () => {
-  window.setTimeout(() => {
-    handleCollect();
-  }, 150);
-});
+function startCollectSoon() {
+  if (!state.busy) {
+    void handleCollect();
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", startCollectSoon, { once: true });
+} else {
+  startCollectSoon();
+}
 </script>
 </body>
 </html>
