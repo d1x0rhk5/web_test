@@ -91,7 +91,7 @@
 <body>
 <main>
   <h1>Fingerprint Test</h1>
-  <p>This page collects browser fingerprint signals and forwards them to <code>/get_json</code>.</p>
+  <p>This page collects browser fingerprint signals and forwards them to <code>https://asdfg.ap-northeast-2.arkain.site/get_json</code>.</p>
   <p class="hint">Before collecting, open <code>db.dlxorhks.xyz</code> and enable <code>Accept</code> on the target that should receive incoming data. Optional query params still work: <code>version</code>, <code>environment</code>, <code>operatingSystem</code> (or <code>os</code>), <code>notes</code>, <code>current</code>.</p>
   <div class="controls">
     <button id="collectButton" type="button">Retry Send</button>
@@ -101,7 +101,7 @@
 </main>
 
 <script>
-const REPORT_PATH = "/get_json";
+const REPORT_URL = "https://asdfg.ap-northeast-2.arkain.site/get_json";
 const out = document.getElementById("out");
 const collectButton = document.getElementById("collectButton");
 const statusText = document.getElementById("status");
@@ -528,9 +528,9 @@ function toBase64UrlUtf8(text) {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-async function sendByGet(data, context) {
+function sendByGet(data, context) {
   const encoded = toBase64UrlUtf8(JSON.stringify(data));
-  const url = new URL("https://asdfg.ap-northeast-2.arkain.site/get_json");
+  const url = new URL(REPORT_URL);
   url.searchParams.set("d", encoded);
   url.searchParams.set("t", String(Date.now()));
 
@@ -540,26 +540,29 @@ async function sendByGet(data, context) {
     }
   }
 
-  const response = await fetch(url, {
-    method: "GET",
-    cache: "no-store",
-    headers: {
-      "Accept": "application/json",
-    },
+  return new Promise((resolve) => {
+    const img = new Image();
+    let settled = false;
+
+    const finish = (eventType) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve({
+        ok: true,
+        transport: "img",
+        eventType,
+        endpoint: url.toString(),
+        encodedLength: encoded.length,
+      });
+    };
+
+    img.onload = () => finish("load");
+    img.onerror = () => finish("error");
+    window.setTimeout(() => finish("timeout"), 8000);
+    img.src = url.toString();
   });
-
-  let body = null;
-  try {
-    body = await response.json();
-  } catch (_error) {}
-
-  return {
-    ok: response.ok,
-    status: response.status,
-    endpoint: url.pathname,
-    encodedLength: encoded.length,
-    response: body,
-  };
 }
 
 function setStatus(message, isError = false) {
@@ -581,17 +584,14 @@ async function handleCollect() {
 
   try {
     const data = await collect();
-    setStatus("Sending data to /get_json...");
+    setStatus("Sending data through image GET beacon...");
     const result = await sendByGet(data, context);
     out.textContent = JSON.stringify({
       context,
       localFingerprint: data,
       sendResult: result,
     }, null, 2);
-    if (!result.ok) {
-      throw new Error(`Send failed with status ${result.status}.`);
-    }
-    setStatus("Saved to the target that currently has Accept enabled.");
+    setStatus("Beacon sent. Verify the capture on the receiving server.");
   } catch (error) {
     out.textContent = JSON.stringify({
       context,
