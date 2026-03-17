@@ -501,6 +501,22 @@ async function getWebGPUAdapterInfo() {
   }
 }
 
+function buildBootstrapSnapshot(context) {
+  return {
+    status: "collecting",
+    phase: "bootstrap",
+    context,
+    startedAt: new Date().toISOString(),
+    location: window.location.href,
+    navigator: getNavigatorData(),
+    screenViewportBundle: getScreenViewportBundle(),
+    intlLocaleTimezoneBundle: getIntlLocaleTimezoneBundle(),
+    monospaceFontPx: getMonospaceSize(),
+    fonts: getFontCount(),
+    webgl: getWebGL(),
+  };
+}
+
 async function collect() {
   return {
     collectedAt: new Date().toISOString(),
@@ -580,17 +596,7 @@ async function handleCollect() {
   state.busy = true;
   syncBusy();
   setStatus("Collecting fingerprint data...");
-  out.textContent = JSON.stringify({
-    status: "collecting",
-    phase: "bootstrap",
-    context,
-    startedAt: new Date().toISOString(),
-    location: window.location.href,
-    navigator: {
-      userAgent: navigator.userAgent || null,
-      language: navigator.language || null,
-    },
-  }, null, 2);
+  out.textContent = JSON.stringify(buildBootstrapSnapshot(context), null, 2);
 
   try {
     await new Promise((resolve) => window.setTimeout(resolve, 0));
